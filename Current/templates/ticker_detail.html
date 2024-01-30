@@ -1,0 +1,48 @@
+<!-- templates/ticker_detail.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ticker Detail - {{ ticker }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='script_detail.js') }}"></script>
+</head>
+<body>
+    <h1>Ticker Detail - {{ ticker }}</h1>
+
+    <div class="stock-box">
+        <h2>{{ ticker }}</h2>
+        <p>Current Price: ${{ current_price }}</p>
+        <p>Open Price: ${{ open_price }}</p>
+        <p>Volume: {{ volume }}</p>
+    </div>
+    <form id="ticker_detail">
+        <button type="submit">Add</button>
+        <div id="detail">
+
+        </div>
+
+    </form>
+
+    <script>
+        var ticker = '{{ ticker }}';
+        // Use the ticker value in your JavaScript code
+        doSomethingWithTicker(ticker);
+        function showMeTheTickerName(ticker) {
+            $('#detail').append(`
+                <div class="stock-box">
+                    <h2>${ticker}</h2>
+                </div>
+            `);
+        }
+
+        $(document).ready(function () {
+            $('#ticker_detail').submit(function(e) {
+                showMeTheTickerName(ticker)
+            })
+        }, 10000)
+    </script>
+
+
+</body>
+</html>

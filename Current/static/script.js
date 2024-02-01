@@ -55,8 +55,8 @@ function addTickerToGrid(ticker) {
             <h2>${ticker}</h2>
             <p id="${ticker}-price"></p>
             <p id="${ticker}-pct"></p>
-            <button class="remove-btn" data-ticker="${ticker}">Remove</button>
-            <button class="detail-button" data-ticker="${ticker}">Detail</button>
+            <button class="btn btn-primary remove-btn" data-ticker="${ticker}">Remove</button>
+            <button class="btn btn-primary detail-button" data-ticker="${ticker}">Detail</button>
         </div>
     `);
 }

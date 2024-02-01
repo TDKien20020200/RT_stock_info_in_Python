@@ -1,4 +1,3 @@
-<!-- templates/ticker_detail.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,43 +5,138 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='script_detail.js') }}"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <h1>Ticker Detail - {{ ticker }}</h1>
-
-    <div class="stock-box">
-        <h2>{{ ticker }}</h2>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="http://127.0.0.1:5000/">Real-time Stock</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="http://127.0.0.1:5000/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="https://github.com/TDKien20020200/RT_stock_info_in_Python">Link</a>
+            </li>
+          </ul>
+          <form class="d-flex">
+            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success" type="submit">Search</button>
+          </form>
+        </div>
+      </div>
+    </nav>
+    <h1>{{ ticker }}</h1>
+    <div>
         <p>Current Price: ${{ current_price }}</p>
         <p>Open Price: ${{ open_price }}</p>
         <p>Volume: {{ volume }}</p>
     </div>
+
     <form id="ticker_detail">
-        <button type="submit">Add</button>
-        <div id="detail">
-
-        </div>
-
+        <button type="submit">Show History Data</button>
+        <button id="show_chart_button" type="button">Show Chart</button>
     </form>
+
+    <div id="history-data" style="display: none;">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Close Price</th>
+                    <th scope="col">Open Price</th>
+                    <th scope="col">High Price</th>
+                    <th scope="col">Low Price</th>
+                    <th scope="col">Volume</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data_list %}
+                    <tr>
+                        <td>{{ item['Date'] }}</td>
+                        <td>{{ item['Close'] }}</td>
+                        <td>{{ item['Open'] }}</td>
+                        <td>{{ item['High'] }}</td>
+                        <td>{{ item['Low'] }}</td>
+                        <td>{{ item['Volume'] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="chart-container" style="display: none;">
+        <div id="chart"></div>
+    </div>
 
     <script>
         var ticker = '{{ ticker }}';
-        // Use the ticker value in your JavaScript code
-        doSomethingWithTicker(ticker);
-        function showMeTheTickerName(ticker) {
-            $('#detail').append(`
-                <div class="stock-box">
-                    <h2>${ticker}</h2>
-                </div>
-            `);
+        var historyDataShown = false;
+        var overviewChartShown = false;
+
+        $('#ticker_detail').submit(function(e) {
+            e.preventDefault();
+            if (historyDataShown) {
+                $('#history-data').hide();
+                historyDataShown = false;
+            } else {
+                $('#history-data').show();
+                historyDataShown = true;
+            }
+        });
+
+        $('#show_chart_button').click(function() {
+            if (overviewChartShown) {
+                $('#chart-container').hide();
+                overviewChartShown = false;
+            } else {
+                $('#chart-container').show();
+                showChart();
+                overviewChartShown = true;
+            }
+        });
+
+        function showChart() {
+            // Create the candlestick trace
+            var candlestickTrace = {
+                x: {{ chart_data['x'] | tojson }},
+                open: {{ chart_data['open'] | tojson }},
+                high: {{ chart_data['high'] | tojson }},
+                low: {{ chart_data['low'] | tojson }},
+                close: {{ chart_data['close'] | tojson }},
+                name: 'Candlestick',
+                type: 'candlestick'
+            };
+
+            // Create the layout
+            var layout = {
+                title: 'Candlestick Chart',
+                xaxis: {
+                    title: 'Date'
+                },
+                yaxis: {
+                    title: 'Price',
+                    rangemode: 'normal'
+                }
+            };
+
+            // Create the data array
+            var data = [candlestickTrace];
+
+            // Create the plot
+            Plotly.newPlot('chart', data, layout);
         }
 
-        $(document).ready(function () {
-            $('#ticker_detail').submit(function(e) {
-                showMeTheTickerName(ticker)
-            })
-        }, 10000)
+        doSomethingWithTicker(ticker);
     </script>
-
-
 </body>
 </html>

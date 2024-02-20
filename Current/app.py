@@ -7,7 +7,7 @@ app = Flask(__name__, template_folder='templates')
 
 @app.route('/')
 def index():
-    return render_template('test.html')
+    return render_template('index.html')
 
 @app.route('/ticker/<ticker>')
 def ticker_detail(ticker):
@@ -26,7 +26,7 @@ def ticker_detail(ticker):
     
     data.plot(subplots=True, figsize=(17, 7))
     plt.suptitle('Google stock attributes', y=0.91)
-    daily_chart_source = 'Current/image/daily_chart.png'
+    daily_chart_source = 'Current/templates/image/daily_chart.png'
     plt.savefig(daily_chart_source)
 
     data = data.tail(30)

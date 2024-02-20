@@ -69,3 +69,35 @@
     background-color: #ccc !important;
 }
 
+.vertical-stack {
+    display: block;
+    width: 100%;
+}
+
+.btn-group-vertical {
+    display: block;
+    width: 100%;
+}
+
+#content_detail_ticker {
+    display: flex;
+    flex-direction: row;
+    max-height: 600px;
+    width: 100vw;
+}
+
+#ticker_detail {
+    width: 15%;
+    margin: 5px;
+}
+
+#ticker_detail button {
+    height: calc(100% / 6 - 10px);
+    width: 100%;
+}
+
+#content_chart {
+    width: 85%;
+    margin: 5px;
+    overflow: auto;
+}

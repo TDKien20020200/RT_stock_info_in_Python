@@ -305,10 +305,3 @@ df.insert(0, 'Close', col_close)
 # print(df_pred)
 
 
-
-chương 1: giới thiệu vài toán, giá trị mang lại, hệ thống liên quan,...
-chương 2: nền tảng công nghệ( mọi công nghệ về vuild hệ thống, tiền xử lí, techinical, công cụ, thư viện)
-chuơng 3: gộp 2 cái kia lại: c
-chương 4: cần sự liên quan và chuyển tiếp với chương 3
-chương 5: triển khai và thử nghiệm hệ thống: xem hệ thống hoạt động như thế nào
-

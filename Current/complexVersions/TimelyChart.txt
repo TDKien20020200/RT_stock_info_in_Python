@@ -1,3 +1,15 @@
+app.py:
+# Monthly Chart
+dataYears.asfreq('M', method='ffill').plot(subplots=True, figsize=(14.5, 6.5), style='-')
+plt.savefig('./static/image/monthly_chart.png')
+# 3monthly Chart
+dataYears.asfreq('3M', method='ffill').plot(subplots=True, figsize=(14.5, 6.5), style='-')
+plt.savefig('./static/image/3monthly_chart.png')
+# 6monthly Chart
+dataYears.asfreq('6M', method='ffill').plot(subplots=True, figsize=(14.5, 6.5), style='-')
+plt.savefig('./static/image/6monthly_chart.png')
+
+ticker_detail.html:
 <!DOCTYPE html>
 <html>
 <head>
@@ -55,6 +67,9 @@
                     <ul class="dropdown-menu" role="menu">
                         <li> <button id="show_daily_chart_button" type="button" class="btn btn-primary">Daily</button></li>
                         <li> <button id="show_weekly_chart_button" type="button" class="btn btn-primary">Weekly</button></li>
+                        <li> <button id="show_monthly_chart_button" type="button" class="btn btn-primary">Monthly</button></li>
+                        <li> <button id="show_3monthly_chart_button" type="button" class="btn btn-primary">3Monthly</button></li>
+                        <li> <button id="show_6monthly_chart_button" type="button" class="btn btn-primary">6Monthly</button></li>
                     </ul>
                 </div>
                 <div class="btn-group-vertical">
@@ -115,6 +130,21 @@
                     <img id="weekly-chart-image" src="" alt="Weekly Chart">
                 </div>
             </div>
+            <div id="monthly-chart-container" style="display: none;">
+                <div id="monthly-chart">
+                    <img id="monthly-chart-image" src="" alt="Monthly Chart">
+                </div>
+            </div>
+            <div id="3monthly-chart-container" style="display: none;">
+                <div id="3monthly-chart">
+                    <img id="3monthly-chart-image" src="" alt="3Monthly Chart">
+                </div>
+            </div>
+            <div id="6monthly-chart-container" style="display: none;">
+                <div id="6monthly-chart">
+                    <img id="6monthly-chart-image" src="" alt="6Monthly Chart">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -124,6 +154,9 @@
         var overviewChartShown = false;
         var dailyChartShown = false;
         var weeklyChartShown = false;
+        var monthlyChartShown = false;
+        var 3monthlyChartShown = false;
+        var 6monthlyChartShown = false;
 
         $('#show_history_data_button').click(function() {
             if (historyDataShown) {
@@ -168,6 +201,39 @@
             }
         });
 
+        $('#show_monthly_chart_button').click(function() {
+            if (monthlyChartShown) {
+                $('#monthly-chart-container').hide();
+                monthlyChartShown = false;
+            } else {
+                $('#monthly-chart-container').show();
+                openImage('{{ url_for('static', filename='image/monthly_chart.png') }}')
+                monthlyChartShown = true;
+            }
+        });
+
+        $('#show_3monthly_chart_button').click(function() {
+            if (3monthlyChartShown) {
+                $('#3monthly-chart-container').hide();
+                3monthlyChartShown = false;
+            } else {
+                $('#3monthly-chart-container').show();
+                openImage('{{ url_for('static', filename='image/3monthly_chart.png') }}')
+                3monthlyChartShown = true;
+            }
+        });
+
+        $('#show_6monthly_chart_button').click(function() {
+            if (6monthlyChartShown) {
+                $('#6monthly-chart-container').hide();
+                6monthlyChartShown = false;
+            } else {
+                $('#6monthly-chart-container').show();
+                openImage('{{ url_for('static', filename='image/6monthly_chart.png') }}')
+                6monthlyChartShown = true;
+            }
+        });
+
         function openImage(url) {
           document.getElementById("daily-chart-image").src = url;
           document.getElementById("daily-chart-container").style.display = "block";
@@ -196,7 +262,7 @@
             var data = [candlestickTrace];
             Plotly.newPlot('overview-chart', data, layout);
         }
-        
+
 
         doSomethingWithTicker(ticker);
     </script>

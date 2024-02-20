@@ -1,7 +1,8 @@
 import yfinance as yf
 from flask import request, render_template, jsonify, Flask
 import matplotlib.pyplot as plt
-import io
+import matplotlib
+matplotlib.use('Agg')
 
 app = Flask(__name__, template_folder='templates')
 
@@ -12,6 +13,7 @@ def index():
 @app.route('/ticker/<ticker>')
 def ticker_detail(ticker):
     data = yf.Ticker(ticker).history(period='1y')
+    dataYears = yf.Ticker(ticker).history(period='7y')
     current_price = data.iloc[-1].Close
     open_price = data.iloc[-1].Open
     volume = data.iloc[-1].Volume
@@ -23,17 +25,21 @@ def ticker_detail(ticker):
         'low': data['Low'].tolist(),
         'close': data['Close'].tolist()
     }
-    
-    data.plot(subplots=True, figsize=(17, 7))
-    plt.suptitle('Google stock attributes', y=0.91)
-    daily_chart_source = 'Current/templates/image/daily_chart.png'
-    plt.savefig(daily_chart_source)
+
+    # Filter and evaluate data
+    # Daily Chart
+    data.plot(subplots=True, figsize=(14.5, 6.5))
+    plt.savefig('./static/image/daily_chart.png')
+    # Weekly Chart
+    data.asfreq('W', method='ffill').plot(subplots=True, figsize=(14.5, 6.5), style='-')
+    plt.savefig('./static/image/weekly_chart.png')
+
 
     data = data.tail(30)
     data_list = data.reset_index().to_dict(orient='records')
     
     return render_template('ticker_detail.html', ticker=ticker, current_price=current_price, open_price=open_price,
-                           volume=volume, data_list=data_list, daily_chart_source=daily_chart_source, chart_data=chart_data)
+                           volume=volume, data_list=data_list, chart_data=chart_data)
 
 @app.route('/get_stock_data', methods=['POST'])
 def get_stock_data():

@@ -1,11 +1,13 @@
 import yfinance as yf
 from flask import request, render_template, jsonify, Flask
+import matplotlib.pyplot as plt
+import io
 
 app = Flask(__name__, template_folder='templates')
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('test.html')
 
 @app.route('/ticker/<ticker>')
 def ticker_detail(ticker):
@@ -21,12 +23,17 @@ def ticker_detail(ticker):
         'low': data['Low'].tolist(),
         'close': data['Close'].tolist()
     }
+    
+    data.plot(subplots=True, figsize=(17, 7))
+    plt.suptitle('Google stock attributes', y=0.91)
+    daily_chart_source = 'Current/image/daily_chart.png'
+    plt.savefig(daily_chart_source)
 
     data = data.tail(30)
     data_list = data.reset_index().to_dict(orient='records')
-
+    
     return render_template('ticker_detail.html', ticker=ticker, current_price=current_price, open_price=open_price,
-                           volume=volume, data_list=data_list, chart_data=chart_data)
+                           volume=volume, data_list=data_list, daily_chart_source=daily_chart_source, chart_data=chart_data)
 
 @app.route('/get_stock_data', methods=['POST'])
 def get_stock_data():

@@ -47,7 +47,7 @@
         <form id="ticker_detail">
             <div class="vertical-stack" role="group" aria-label="Vertical button group">
                 <div class="btn-group-vertical">
-                    <button id="show_history_data_button" type="submit" class="btn btn-primary">Show History</button>
+                    <button id="show_history_data_button" type="button" class="btn btn-primary">Show History</button>
                 </div>
                 <div class="btn-group-vertical">
                     <button id="show_chart_button" type="button" class="btn btn-primary">Overview Chart</button>
@@ -55,9 +55,9 @@
                 <div class="btn-group-vertical">
                     <button id="timely_chart_button" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">Timely Chart</button>
                     <ul class="dropdown-menu" role="menu">
-                        <li><a href="#">Daily</a></li>
-                        <li><a href="#">Weekly</a></li>
-                        <li><a href="#">Monthly</a></li>
+                        <li> <button id="show_daily_chart_button" type="button" class="btn btn-primary">Daily</button></li>
+                        <li> <button id="show_weekly_chart_button" type="button" class="btn btn-primary">Weekly</button></li>
+                        <li> <button id="show_monthly_chart_button" type="button" class="btn btn-primary">Monthly</button></li>
                     </ul>
                 </div>
                 <div class="btn-group-vertical">
@@ -104,19 +104,31 @@
                 </table>
             </div>
 
-            <div id="chart-container" style="display: none;">
-                <div id="chart"></div>
+            <div id="overview-chart-container" style="display: none;">
+                <div id="overview-chart"></div>
+            </div>
+
+            <div id="daily-chart-container" style="display: none;">
+                <div id="daily-chart">
+                    <img id="daily-chart-image" src="Current/image/daily_chart.png" alt="Daily Chart">
+                </div>
             </div>
         </div>
     </div>
+
+    <div>
+        <div>
+            <img src="Current/image/daily_chart.png" alt="Daily Chart">
+        </div>
+    </div>    
 
     <script>
         var ticker = '{{ ticker }}';
         var historyDataShown = false;
         var overviewChartShown = false;
+        var dailyChartShown = false;
 
-        $('#ticker_detail').submit(function(e) {
-            e.preventDefault();
+        $('#show_history_data_button').click(function() {
             if (historyDataShown) {
                 $('#history-data').hide();
                 historyDataShown = false;
@@ -128,17 +140,32 @@
 
         $('#show_chart_button').click(function() {
             if (overviewChartShown) {
-                $('#chart-container').hide();
+                $('#overview-chart-container').hide();
                 overviewChartShown = false;
             } else {
-                $('#chart-container').show();
+                $('#overview-chart-container').show();
                 showChart();
                 overviewChartShown = true;
             }
         });
 
+        $('#show_daily_chart_button').click(function() {
+            if (dailyChartShown) {
+                $('#daily-chart-container').hide();
+                dailyChartShown = false;
+            } else {
+                $('#daily-chart-container').show();
+                openImage('Current/image/daily_chart.png')
+                dailyChartShown = true;
+            }
+        });
+
+        function openImage(url) {
+          document.getElementById("daily-chart-image").src = url;
+          document.getElementById("daily-chart-container").style.display = "block";
+        }
+
         function showChart() {
-            // Create the candlestick trace
             var candlestickTrace = {
                 x: {{ chart_data['x'] | tojson }},
                 open: {{ chart_data['open'] | tojson }},
@@ -148,8 +175,6 @@
                 name: 'Candlestick',
                 type: 'candlestick'
             };
-
-            // Create the layout
             var layout = {
                 title: 'Candlestick Chart',
                 xaxis: {
@@ -160,12 +185,8 @@
                     rangemode: 'normal'
                 }
             };
-
-            // Create the data array
             var data = [candlestickTrace];
-
-            // Create the plot
-            Plotly.newPlot('chart', data, layout);
+            Plotly.newPlot('overview-chart', data, layout);
         }
         
 

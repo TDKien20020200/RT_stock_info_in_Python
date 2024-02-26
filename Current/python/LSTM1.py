@@ -71,18 +71,18 @@ df.insert(0, 'Close', col_close)
 
 # # Tính toán các đường trung bình theo 10d, 20d, 50d moving average(ma)
 # ma_day = [10, 20, 50]
-#
+
 # for ma in ma_day:
 #     col_name = f'MA for {ma} days'
 #     df[col_name] = df['Close'].rolling(ma).mean()
-#
+
 # # df[['Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days']].plot(figsize=(17,7))
 # # plt.title('Comparision some MA and Close of Google stock')
 # # plt.show()
 #
 # # Dùng hàm pct_change() để tìm phần trăm thay đổi của giá Close mỗi ngày
 # df['Daily_Return'] = df['Close'].pct_change()
-#
+
 # # # Biểu diễn
 # # df.Daily_Return.plot(legend=True, figsize=(15,5))
 # # plt.title('Daily return percentage of Google stock')
@@ -109,41 +109,41 @@ df.insert(0, 'Close', col_close)
 # for index in range(len(data) - seq_len + 1):
 #     sequences.append(data[index: index + seq_len])
 # sequences = np.array(sequences)
-#
-#
+
+
 # # Customize dataset Tách dữ liệu toàn bộ tập dữ liệu thành ba phần. 80% cho tập huấn luyện (train), 10% cho tập xác
 # # thực (valid) và 10% còn lại cho tập kiểm thử (test):
 # valid_set_size_percentage = 10
 # test_set_size_percentage = 10
-#
+
 # valid_set_size = int(np.round(valid_set_size_percentage / 100 * sequences.shape[0]))
 # test_set_size = int(np.round(test_set_size_percentage / 100 * sequences.shape[0]))
 # train_set_size = sequences.shape[0] - (valid_set_size + test_set_size)
-#
+
 # x_train = sequences[:train_set_size, :-1, :]
 # y_train = sequences[:train_set_size, -1, :]
-#
+
 # x_valid = sequences[train_set_size:train_set_size + valid_set_size, :-1, :]
 # y_valid = sequences[train_set_size:train_set_size + valid_set_size, -1, :]
-#
+
 # x_test = sequences[train_set_size + test_set_size:, :-1, :]
 # y_test = sequences[train_set_size + test_set_size:, -1, :]
-#
-#
+
+
 # # DataLoader
 # # Tạo Trình tải dữ liệu: xác định các trình tải dữ liệu để tải tập dữ liệu theo từng batch với batch size = 32
 # x_train = torch.tensor(x_train).float()
 # y_train = torch.tensor(y_train).float()
-#
+
 # x_valid = torch.tensor(x_valid).float()
 # y_valid = torch.tensor(y_valid).float()
-#
+
 # train_dataset = TensorDataset(x_train, y_train)
 # train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=False)
-#
+
 # valid_dataset = TensorDataset(x_valid, y_valid)
 # valid_dataloader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
-#
+
 # # ############################################################################################################## Xây
 # # dựng model Xác định kiến trúc: vì là vấn đề về chuỗi thời gian nên sẽ sử dụng Long Short-term Memory (LSTM) để nắm
 # # bắt thông tin tuần tự:
@@ -220,8 +220,8 @@ df.insert(0, 'Close', col_close)
 #         best_valid_loss = valid_loss
 #         torch.save(model, 'saved_weights.pt')
 #
-#     # print("Epoch ",epoch+1)
-#     # print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
+#    # print("Epoch ",epoch+1)
+#    # print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
 #
 # # Từ kết quả trên suy ra đuợc mô hình tốt nhất, từ đó đưa ra vài dự đoán ban đầu
 # model=torch.load('saved_weights.pt')

@@ -58,18 +58,16 @@
                     </ul>
                 </div>
                 <div class="btn-group-vertical">
-                    <button id="ma_chart_button" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">MA Chart</button>
-                    <ul class="dropdown-menu" role="menu">
-                        <li><a href="#">10days</a></li>
-                        <li><a href="#">20days</a></li>
-                        <li><a href="#">50days</a></li>
-                    </ul>
+                    <button id="show_ma_chart_button" type="button" class="btn btn-primary">MA Chart</button>
                 </div>
                 <div class="btn-group-vertical">
-                    <button id="prediction_button" type="button" class="btn btn-primary">Prediction</button>
+                    <button id="show_percentage_change_button" type="button" class="btn btn-primary">Close percentage change</button>
                 </div>
                 <div class="btn-group-vertical">
-                    <button id="next_10_days_button" type="button" class="btn btn-primary">The Next 10 Days</button>
+                    <button id="show_prediction_button" type="button" class="btn btn-primary">Prediction</button>
+                </div>
+                <div class="btn-group-vertical">
+                    <button id="show_next_10_days_button" type="button" class="btn btn-primary">The Next 10 Days</button>
                 </div>
             </div>
         </form>
@@ -110,9 +108,26 @@
                     <img id="daily-chart-image" src="" alt="Daily Chart">
                 </div>
             </div>
+
             <div id="weekly-chart-container" style="display: none;">
                 <div id="weekly-chart">
                     <img id="weekly-chart-image" src="" alt="Weekly Chart">
+                </div>
+            </div>
+
+            <div id="ma-chart-container" style="display: none;">
+                <div id="ma-chart">
+                    <img id="ma-chart-image" src="" alt="ma Chart">
+                </div>
+            </div>
+            <div id="percentage-change-container" style="display: none;">
+                <div id="percentage-change">
+                    <img id="percentage-change-image" src="" alt="percentage change of Close">
+                </div>
+            </div>
+            <div id="predict-visualize-container" style="display: none;">
+                <div id="predict-visualize">
+                    <img id="predict-visualize-image" src="" alt="predict visualization and compare with reallife">
                 </div>
             </div>
         </div>
@@ -124,6 +139,9 @@
         var overviewChartShown = false;
         var dailyChartShown = false;
         var weeklyChartShown = false;
+        var maChartShown = false;
+        var percentageChangeShown = false;
+        var predictVisualizeShown = false;
 
         $('#show_history_data_button').click(function() {
             if (historyDataShown) {
@@ -152,7 +170,7 @@
                 dailyChartShown = false;
             } else {
                 $('#daily-chart-container').show();
-                openImage('{{ url_for('static', filename='image/daily_chart.png') }}')
+                openImage('{{ url_for('static', filename='image/daily_chart.png') }}', "daily-chart-image", "daily-chart-container")
                 dailyChartShown = true;
             }
         });
@@ -163,14 +181,47 @@
                 weeklyChartShown = false;
             } else {
                 $('#weekly-chart-container').show();
-                openImage('{{ url_for('static', filename='image/weekly_chart.png') }}')
+                openImage('{{ url_for('static', filename='image/weekly_chart.png') }}', "weekly-chart-image", "weekly-chart-container")
                 weeklyChartShown = true;
             }
         });
 
-        function openImage(url) {
-          document.getElementById("daily-chart-image").src = url;
-          document.getElementById("daily-chart-container").style.display = "block";
+        $('#show_ma_chart_button').click(function() {
+            if (maChartShown) {
+                $('#ma-chart-container').hide();
+                maChartShown = false;
+            } else {
+                $('#ma-chart-container').show();
+                openImage('{{ url_for('static', filename='image/MAs_chart.png') }}', "ma-chart-image", "ma-chart-container")
+                maChartShown = true;
+            }
+        });
+
+        $('#show_percentage_change_button').click(function() {
+            if (percentageChangeShown) {
+                $('#percentage-change-container').hide();
+                percentageChangeShown = false;
+            } else {
+                $('#percentage-change-container').show();
+                openImage('{{ url_for('static', filename='image/daily_return_chart.png') }}', "percentage-change-image", "percentage-change-container")
+                percentageChangeShown = true;
+            }
+        });
+
+        $('#show_prediction_button').click(function() {
+            if (predictVisualizeShown) {
+                $('#predict-visualize-container').hide();
+                predictVisualizeShown = false;
+            } else {
+                $('#predict-visualize-container').show();
+                openImage('{{ url_for('static', filename='image/predict_visualization.png') }}', "predict-visualize-image", "predict-visualize-container")
+                predictVisualizeShown = true;
+            }
+        });
+
+        function openImage(url, imgId, divId) {
+          document.getElementById(imgId).src = url;
+          document.getElementById(divId).style.display = "block";
         }
 
         function showChart() {

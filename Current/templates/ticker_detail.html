@@ -64,7 +64,11 @@
                     <button id="show_percentage_change_button" type="button" class="btn btn-primary">Close percentage change</button>
                 </div>
                 <div class="btn-group-vertical">
-                    <button id="show_prediction_button" type="button" class="btn btn-primary">Prediction</button>
+                    <button id="prediction_chart_button" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">Prediction</button>
+                    <ul class="dropdown-menu" role="menu">
+                        <li> <button id="show_prediction_button" type="button" class="btn btn-primary">Compare with Reality</button></li>
+                        <li> <button id="candlestick_prediction_chart_button" type="button" class="btn btn-primary">Candlestick chart</button></li>
+                    </ul>
                 </div>
                 <div class="btn-group-vertical">
                     <button id="show_next_10_days_button" type="button" class="btn btn-primary">The Next 10 Days</button>
@@ -130,6 +134,9 @@
                     <img id="predict-visualize-image" src="" alt="predict visualization and compare with reallife">
                 </div>
             </div>
+            <div id="predict-candlestick-container" style="display: none;">
+                <div id="predict-chart"></div>
+            </div>
         </div>
     </div>
 
@@ -142,6 +149,7 @@
         var maChartShown = false;
         var percentageChangeShown = false;
         var predictVisualizeShown = false;
+        var predictChartShown = false;
 
         $('#show_history_data_button').click(function() {
             if (historyDataShown) {
@@ -214,8 +222,19 @@
                 predictVisualizeShown = false;
             } else {
                 $('#predict-visualize-container').show();
-                openImage('{{ url_for('static', filename='image/predict_visualization.png') }}', "predict-visualize-image", "predict-visualize-container")
+                openImage('{{ url_for('static', filename='image/prediction_chart.png') }}', "predict-visualize-image", "predict-visualize-container")
                 predictVisualizeShown = true;
+            }
+        });
+
+        $('#candlestick_prediction_chart_button').click(function() {
+            if (predictChartShown) {
+                $('#predict-candlestick-container').hide();
+                predictChartShown = false;
+            } else {
+                $('#predict-candlestick-container').show();
+                showPredictedChart();
+                predictChartShown = true;
             }
         });
 
@@ -246,6 +265,30 @@
             };
             var data = [candlestickTrace];
             Plotly.newPlot('overview-chart', data, layout);
+        }
+
+        function showPredictedChart() {
+            var candlestickTrace = {
+                x: {{ data_chart_predicted['x'] | tojson }},
+                open: {{ data_chart_predicted['open'] | tojson }},
+                high: {{ data_chart_predicted['high'] | tojson }},
+                low: {{ data_chart_predicted['low'] | tojson }},
+                close: {{ data_chart_predicted['close'] | tojson }},
+                name: 'Candlestick',
+                type: 'candlestick'
+            };
+            var layout = {
+                title: 'Candlestick predicted Chart',
+                xaxis: {
+                    title: 'Date'
+                },
+                yaxis: {
+                    title: 'Price',
+                    rangemode: 'normal'
+                }
+            };
+            var data = [candlestickTrace];
+            Plotly.newPlot('predict-chart', data, layout);
         }
         
 

@@ -15,6 +15,7 @@ import pandas as pd
 
 app = Flask(__name__, template_folder='templates')
 
+
 # Xây dựng model Xác định kiến trúc: vì là vấn đề về chuỗi thời gian nên sẽ sử dụng Long Short-term Memory (LSTM) để nắm
 # bắt thông tin tuần tự:
 class NeuralNetwork(nn.Module):
@@ -34,10 +35,12 @@ model = NeuralNetwork(4)
 # push to cuda if available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
+
 # Hàm Optimize Adam
 optimizer = optim.Adam(model.parameters())
 # Hàm Loss MSELoss
 mse = nn.MSELoss()
+
 
 # Mô hình Training: xác định quá trình thuận và nghịch (forward and backward) để train mạng lưới Neural:
 def train(dataloader):
@@ -55,6 +58,7 @@ def train(dataloader):
 
     return epoch_loss
 
+
 # Đánh giá hiệu suất mô hình
 def evaluate(dataloader):
     epoch_loss = 0
@@ -69,9 +73,33 @@ def evaluate(dataloader):
 
     return epoch_loss / len(dataloader)
 
+
+def printTrainVal(train_dataloader, valid_dataloader):
+    n_epochs = 50
+    best_valid_loss = float('inf')
+
+    for epoch in range(1, n_epochs + 1):
+
+        train_loss = train(train_dataloader)
+        valid_loss = evaluate(valid_dataloader)
+
+        # save the best model
+        if valid_loss < best_valid_loss:
+            best_valid_loss = valid_loss
+            torch.save(model, 'saved_weights.pt')
+
+        print("Epoch ", epoch + 1)
+        print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
+
+
+def bestModel():
+    modelUse = torch.load('saved_weights.pt')
+    return modelUse
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/ticker/<ticker>')
 def ticker_detail(ticker):
@@ -92,9 +120,11 @@ def ticker_detail(ticker):
     # Filter and evaluate data
     # Daily Chart
     data.plot(subplots=True, figsize=(14.5, 6.5))
+    plt.title('Daily Chart')
     plt.savefig('./static/image/daily_chart.png')
     # Weekly Chart
     data.asfreq('W', method='ffill').plot(subplots=True, figsize=(14.5, 6.5), style='-')
+    plt.title('Weekly Chart')
     plt.savefig('./static/image/weekly_chart.png')
 
     # Calculate MAs
@@ -108,71 +138,132 @@ def ticker_detail(ticker):
 
     # Dùng hàm pct_change() để tìm phần trăm thay đổi của giá Close mỗi ngày
     data['Daily_Return'] = data['Close'].pct_change()
-    data.Daily_Return.plot(legend=True, figsize=(14.5, 6.5))
+    data[['Daily_Return']].plot(legend=True, figsize=(14.5, 6.5))
     plt.title('Daily Return Percentage')
     plt.savefig('./static/image/daily_return_chart.png')
 
     ###############################################################################################################
     # Tạo dataset theo batch size trong pytorch
     # Chuẩn hóa dữ liệu
-    data2 = data.copy(deep=True)
-    scaler = MinMaxScaler()
-    data2['Close'] = scaler.fit_transform(data2['Close'].values.reshape(-1, 1))
+    data2 = dataYears.copy(deep=True)
+    scaler = MinMaxScaler(feature_range=(0, 15)).fit(data2['Low'].values.reshape(-1, 1))
+    data2['Close'] = scaler.transform(data2['Close'].values.reshape(-1, 1))
     data2['Open'] = scaler.transform(data2['Open'].values.reshape(-1, 1))
     data2['High'] = scaler.transform(data2['High'].values.reshape(-1, 1))
     data2['Low'] = scaler.transform(data2['Low'].values.reshape(-1, 1))
+    dataUse = data2[['Open', 'High', 'Low', 'Close']].values
+    # print(dataUse.shape)
+    # print(dataUse)
 
-    # Tạo dữ liệu huấn luyện và kiểm tra
-    train_data = data2.iloc[:-30]
-    test_data = data2.iloc[-30:]
+    # chuẩn bị dữ liệu cho bài toán dự đoán giá cổ phiếu dựa trên giá cổ phiếu từ 10 ngày trước để dự
+    # đoán giá cổ phiếu vào ngày tiếp theo
+    seq_len = 11
+    sequences = []
+    for index in range(len(dataUse) - seq_len + 1):
+        sequences.append(dataUse[index: index + seq_len])
+    sequences = np.array(sequences)
 
-    # Chuyển đổi dữ liệu thành dạng tensor
-    train_tensor = torch.tensor(train_data[['Close', 'Open', 'High', 'Low']].values).float()
-    test_tensor = torch.tensor(test_data[['Close', 'Open', 'High', 'Low']].values).float()
+    # Customize dataset
+    # Tách dữ liệu toàn bộ tập dữ liệu thành ba phần. 80% cho tập huấn luyện (train), 10% cho tập xác thực (valid) và 10% còn lại cho tập kiểm thử (test):
+    valid_set_size_percentage = 10
+    test_set_size_percentage = 10
 
-    # Tạo dataset và dataloader
-    train_dataset = TensorDataset(train_tensor[:-1], train_tensor[1:])
-    test_dataset = TensorDataset(test_tensor[:-1], test_tensor[1:])
-    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    valid_set_size = int(np.round(valid_set_size_percentage / 100 * sequences.shape[0]))
+    test_set_size = int(np.round(test_set_size_percentage / 100 * sequences.shape[0]))
+    train_set_size = sequences.shape[0] - (valid_set_size + test_set_size)
 
-    # Huấn luyện mô hình
-    num_epochs = 100
-    train_losses = []
-    test_losses = []
+    x_train = sequences[:train_set_size, :-1, :]
+    y_train = sequences[:train_set_size, -1, :]
 
-    for epoch in range(num_epochs):
-        train_loss = train(train_dataloader)
-        test_loss = evaluate(test_dataloader)
-        train_losses.append(train_loss)
-        test_losses.append(test_loss)
+    x_valid = sequences[train_set_size:train_set_size + valid_set_size, :-1, :]
+    y_valid = sequences[train_set_size:train_set_size + valid_set_size, -1, :]
 
-        if epoch % 10 == 0:
-            print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Test Loss: {test_loss:.4f}')
+    x_test = sequences[train_set_size + test_set_size:, :-1, :]
+    y_test = sequences[train_set_size + test_set_size:, -1, :]
 
-    # Dự đoán giá đóng cửa
+    # DataLoader
+    # Tạo Trình tải dữ liệu: xác định các trình tải dữ liệu để tải tập dữ liệu theo từng batch với batch size = 32
+    x_train = torch.tensor(x_train).float()
+    y_train = torch.tensor(y_train).float()
+
+    x_valid = torch.tensor(x_valid).float()
+    y_valid = torch.tensor(y_valid).float()
+
+    train_dataset = TensorDataset(x_train, y_train)
+    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=False)
+
+    valid_dataset = TensorDataset(x_valid, y_valid)
+    valid_dataloader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
+
+    # Mô hình huấn luyện
+    printTrainVal(train_dataloader, valid_dataloader)
+
+    modelUse = bestModel()
+
+    x_test = torch.tensor(x_test).float()
+
     with torch.no_grad():
-        model.eval()
-        predicted = model(test_tensor[:-1].to(device)).cpu().numpy()
-        predicted = scaler.inverse_transform(predicted)
+        y_test_pred = modelUse(x_test)
 
-    # Plot dự đoán và giá thực tế
+    y_test_pred = y_test_pred.numpy()[0]
+
+    idx = 0
     plt.figure(figsize=(14.5, 6.5))
-    x_values = test_data.index[1:len(predicted) + 1]
-    y_values_actual = test_data['Close'].values[1:len(predicted) + 1]
-    y_values_predicted = predicted.flatten()
+    plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test.shape[0]),
+             y_test[:, idx], color='black', label='test target')
 
-    plt.plot(x_values, y_values_actual, label='Actual Close Price')
-    plt.plot(x_values, y_values_predicted[:len(x_values)], label='Predicted Close Price')
-    plt.title('Actual Close Price vs Predicted Close Price')
-    plt.xlabel('Date')
-    plt.ylabel('Close Price')
-    plt.legend()
+    plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test_pred.shape[0]),
+             y_test_pred[:, idx], color='green', label='test prediction')
+
+    plt.title('Future stock prices')
+    plt.xlabel('time [days]')
+    plt.ylabel('normalized price')
+    plt.legend(loc='best')
     plt.savefig('./static/image/prediction_chart.png')
 
+    dataShowHis = data.tail(30)
+    data_list = dataShowHis.reset_index().to_dict(orient='records')
+
+    index_values = dataYears[len(dataYears) - len(y_test):].index
+    col_values = ['Open', 'Low', 'High', 'Close']
+    dataYears_predicted = pd.DataFrame(data=y_test_pred, index=index_values, columns=col_values)
+
+    data_chart_predicted = {
+        'x': dataYears_predicted.index.strftime('%Y-%m-%d').tolist(),
+        'open': dataYears_predicted['Open'].tolist(),
+        'high': dataYears_predicted['High'].tolist(),
+        'low': dataYears_predicted['Low'].tolist(),
+        'close': dataYears_predicted['Close'].tolist()
+    }
+
+    # Dự đoán 10 ngày tiếp theo
+    # Get the last sequence of historical data as features for predicting the next 10 days
+    last_sequence = sequences[-1:, 1:, :]
+    last_sequence = torch.from_numpy(last_sequence).float()
+
+    # Generate predictions for the next 10 days
+    PRED_DAYS = 10
+    with torch.no_grad():
+        for i in range(PRED_DAYS):
+            pred_i = modelUse(last_sequence)
+            last_sequence = torch.cat((last_sequence, pred_i), dim=1)
+            last_sequence = last_sequence[:, 1:, :]
+
+    pred_days = last_sequence.reshape(PRED_DAYS, 4).numpy()
+
+    # inverse transform the predicted values
+    pred_days = scaler.inverse_transform(pred_days)
+
+    data_pred = pd.DataFrame(
+        data=pred_days,
+        columns=['Open', 'High', 'Low', 'Close']
+    )
+    # print(data_pred)
+
     # Truyền dữ liệu cho template
-    return render_template('ticker.html', ticker=ticker, current_price=current_price, open_price=open_price,
-                           volume=volume, chart_data=chart_data, train_losses=train_losses, test_losses=test_losses)
+    return render_template('ticker_detail.html', ticker=ticker, current_price=current_price, open_price=open_price,
+                           volume=volume, data_list=data_list, chart_data=chart_data,
+                           data_chart_predicted=data_chart_predicted, data_pred=data_pred)
 
 
 @app.route('/get_stock_data', methods=['POST'])

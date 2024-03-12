@@ -36,15 +36,18 @@
       </div>
     </nav>
 
-    <form id="add-ticker-form">
-      <div class="form-group">
-        <label for="new-ticker">Name of Stock Market</label>
-        <input type="text" class="form-control" id="new-ticker" placeholder="Example: AAPL, MSFT,...">
-      </div>
-      <button type="submit" class="btn btn-primary">Add</button>
-    </form>
+    <div class="main-container">
+      <form id="add-ticker-form">
+        <div class="form-group">
+          <label for="new-ticker">Name of Stock Market</label>
+          <input type="text" class="form-control" id="new-ticker" placeholder="Example: AAPL, MSFT,...">
+        </div>
+        <button type="submit" class="btn btn-primary" id="new-ticker-button">Add</button>
+      </form>
 
-    <p id="timer">Next update in <span id="counter"></span> seconds.</p>
+      <p id="timer">Next update in <span id="counter"></span> seconds.</p>
+    </div>
+
     <div id="tickers-grid">
 
     </div>

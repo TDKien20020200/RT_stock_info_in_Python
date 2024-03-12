@@ -120,11 +120,11 @@ def ticker_detail(ticker):
     # Filter and evaluate data
     # Daily Chart
     data.plot(subplots=True, figsize=(14.5, 6.5))
-    plt.title('Daily Chart')
+    plt.title('Daily Chart', y=8.2)
     plt.savefig('./static/image/daily_chart.png')
     # Weekly Chart
     data.asfreq('W', method='ffill').plot(subplots=True, figsize=(14.5, 6.5), style='-')
-    plt.title('Weekly Chart')
+    plt.title('Weekly Chart', y=8.2)
     plt.savefig('./static/image/weekly_chart.png')
 
     # Calculate MAs
@@ -248,22 +248,25 @@ def ticker_detail(ticker):
             pred_i = modelUse(last_sequence)
             last_sequence = torch.cat((last_sequence, pred_i), dim=1)
             last_sequence = last_sequence[:, 1:, :]
-
     pred_days = last_sequence.reshape(PRED_DAYS, 4).numpy()
-
     # inverse transform the predicted values
     pred_days = scaler.inverse_transform(pred_days)
+    date_range = pd.bdate_range(start=pd.Timestamp.today() + pd.Timedelta(days=1), periods=PRED_DAYS, freq='C', tz='America/New_York')
 
     data_pred = pd.DataFrame(
         data=pred_days,
         columns=['Open', 'High', 'Low', 'Close']
     )
-    # print(data_pred)
+    data_pred['Date'] = date_range
+    col_close = data_pred.pop('Date')
+    data_pred.insert(0, 'Date', col_close)
+    pred_data_list = data_pred.reset_index().to_dict(orient='records')
+    print(pred_data_list)
 
     # Truyền dữ liệu cho template
     return render_template('ticker_detail.html', ticker=ticker, current_price=current_price, open_price=open_price,
                            volume=volume, data_list=data_list, chart_data=chart_data,
-                           data_chart_predicted=data_chart_predicted, data_pred=data_pred)
+                           data_chart_predicted=data_chart_predicted, pred_data_list=pred_data_list)
 
 
 @app.route('/get_stock_data', methods=['POST'])

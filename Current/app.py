@@ -13,6 +13,12 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 
+import seaborn as sns
+
+sns.set_style('whitegrid')
+from pandas_datareader.data import DataReader
+from pandas_datareader import data as pdr
+
 app = Flask(__name__, template_folder='templates')
 
 
@@ -99,6 +105,11 @@ def bestModel():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/tickers/analysis')
+def tickers_analysis():
+    return render_template('tickers_analysis.html')
 
 
 @app.route('/ticker/<ticker>')

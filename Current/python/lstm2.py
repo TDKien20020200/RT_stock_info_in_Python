@@ -5,9 +5,9 @@ import seaborn as sns
 
 sns.set_style('whitegrid')
 plt.style.use("fivethirtyeight")
+import yfinance as yf
 
 from pandas_datareader.data import DataReader
-import yfinance as yf
 from pandas_datareader import data as pdr
 
 yf.pdr_override()
@@ -42,9 +42,9 @@ df = pd.concat(data.values(), keys=data.keys(), axis=0)
 
 # # Summary Stats
 # print(df.loc["AAPL"].describe())  # Use df.loc["AAPL"] to access the AAPL DataFrame
-
+#
 # print(df.loc["AAPL"].info())
-
+#
 # # Giá đóng cửa
 # plt.figure(figsize=(15, 10))
 # plt.subplots_adjust(top=1.25, bottom=1.2)
@@ -58,7 +58,7 @@ df = pd.concat(data.values(), keys=data.keys(), axis=0)
 #
 # plt.tight_layout()
 # plt.show()
-
+#
 # # Tổng khối lượng cổ phiếu được giao dịch mỗi ngày
 # plt.figure(figsize=(15, 10))
 # plt.subplots_adjust(top=1.25, bottom=1.2)
@@ -108,7 +108,7 @@ for ma in ma_day:
 # axes[1, 1].legend()
 #
 # fig.tight_layout()
-# # plt.show()
+# plt.show()
 
 ####################################################################################################
 # Phân tích Price (%tăng hoặc % giảm mỗi ngày):
@@ -135,9 +135,9 @@ for company in company_list:
 # axes[1,1].set_title('AMAZON')
 #
 # fig.tight_layout()
-# # plt.show()
-
-# Bằng biểu đồ cột
+# plt.show()
+#
+# # Bằng biểu đồ cột
 # plt.figure(figsize=(12, 9))
 #
 # for i, company in enumerate(company_list, 1):
@@ -148,7 +148,7 @@ for company in company_list:
 #     plt.title(f'{company_name[i - 1]}')
 #
 # plt.tight_layout()
-# # plt.show()
+# plt.show()
 
 ###################################################################################################
 # Phân tích sự tương quan giữa các giá trị Adj Close
@@ -158,7 +158,7 @@ closing_df = pdr.get_data_yahoo(tech_list, start=start, end=end)['Adj Close']
 # Make a new tech returns DataFrame
 tech_rets = closing_df.pct_change()
 # print(tech_rets.head(50))
-
+#
 # # Comparing Google to itself should show a perfectly linear relationship
 # sns.jointplot(x='GOOG', y='GOOG', data=tech_rets, kind='scatter', color='seagreen')
 # plt.show()
@@ -170,7 +170,7 @@ tech_rets = closing_df.pct_change()
 # # use pairplot for automatic visual analysis of all the comparisons
 # sns.pairplot(tech_rets, kind='reg')
 # plt.show()
-
+#
 # # Sett up our figure by naming it returns_fig, call PairPLot on the DataFrame
 # return_fig = sns.PairGrid(tech_rets.dropna())
 # # Using map_upper we can specify what the upper triangle will look like.
@@ -180,7 +180,7 @@ tech_rets = closing_df.pct_change()
 # # Finally we'll define the diagonal as a series of histogram plots of the daily return
 # return_fig.map_diag(plt.hist, bins=30)
 # plt.show()
-
+#
 # # Set up our figure by naming it returns_fig, call PairPLot on the DataFrame
 # returns_fig = sns.PairGrid(closing_df)
 # # Using map_upper we can specify what the upper triangle will look like.
@@ -190,7 +190,7 @@ tech_rets = closing_df.pct_change()
 # # Finally we'll define the diagonal as a series of histogram plots of the daily return
 # returns_fig.map_diag(plt.hist,bins=30)
 # plt.show()
-
+#
 # plt.figure(figsize=(12, 10))
 #
 # plt.subplot(2, 2, 1)
@@ -203,11 +203,11 @@ tech_rets = closing_df.pct_change()
 # plt.show()
 
 ###############################################################################################
-# # Rủi ro với từng công ty
-# rets = tech_rets.dropna()
-#
-# area = np.pi * 20
-#
+# Rủi ro với từng công ty
+rets = tech_rets.dropna()
+
+area = np.pi * 20
+
 # plt.figure(figsize=(10, 8))
 # plt.scatter(rets.mean(), rets.std(), s=area)
 # plt.xlabel('Expected return')
@@ -224,9 +224,9 @@ tech_rets = closing_df.pct_change()
 # Get the stock quote
 df = pdr.get_data_yahoo('AAPL', start='2022-01-01', end=datetime.now())
 
-# Bieu dien Close
+# # Bieu dien Close
 # plt.figure(figsize=(16,6))
-# plt.title('Close Price History')
+# plt.title('Close Price History of Apple Inc.')
 # plt.plot(df['Close'])
 # plt.xlabel('Date', fontsize=18)
 # plt.ylabel('Close Price USD ($)', fontsize=18)

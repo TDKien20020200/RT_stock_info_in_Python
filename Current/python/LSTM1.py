@@ -6,11 +6,11 @@ import torch.optim as optim
 import yfinance as yf
 import torch.nn as nn
 import torch.functional as F
-import plotly.graph_objects as go
-import plotly.io as pio
-import plotly.offline as pyo
-
-from tqdm.notebook import tqdm
+# import plotly.graph_objects as go
+# import plotly.io as pio
+# import plotly.offline as pyo
+#
+# from tqdm.notebook import tqdm
 from torchsummary import summary
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import TensorDataset, DataLoader

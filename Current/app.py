@@ -1,5 +1,5 @@
 import yfinance as yf
-from flask import request, render_template, jsonify, Flask
+from flask import request, render_template, jsonify, Flask, url_for
 import matplotlib.pyplot as plt
 import matplotlib
 
@@ -20,6 +20,7 @@ from pandas_datareader.data import DataReader
 from pandas_datareader import data as pdr
 from datetime import datetime
 yf.pdr_override()
+import os
 
 app = Flask(__name__, template_folder='templates')
 
@@ -116,6 +117,9 @@ def tickers_analysis():
     start = datetime(end.year - 2, end.month, end.day)
     data = {}
 
+    now = datetime.now()
+    date = now.strftime('%d') + now.strftime('%m')
+
     for stock in tech_list:
         data[stock] = yf.download(stock, start, end)
     company_list = tech_list
@@ -126,27 +130,35 @@ def tickers_analysis():
 
     df = pd.concat(data.values(), keys=data.keys(), axis=0)
     # Close chart
-    plt.figure(figsize=(15, 10))
-    plt.subplots_adjust(top=1.25, bottom=1.2)
-    for i, company in enumerate(company_list, 1):
-        plt.subplot(2, 2, i)
-        df.loc[company]['Adj Close'].plot()
-        plt.ylabel('Adj Close')
-        plt.xlabel(None)
-        plt.title(f"Closing Price of {tech_list[i - 1]}")
-    plt.tight_layout()
-    plt.savefig('./static/image/tickers/close_chart.png')
+    filename1 = f'adj_close_chart_{date}.png'
+    filepath1 = os.path.join('./static/image/tickers/', filename1)
+    fileurl1 = url_for('static', filename=f'image/tickers/{filename1}')
+    if not os.path.exists(filepath1):
+        plt.figure(figsize=(15, 10))
+        plt.subplots_adjust(top=1.25, bottom=1.2)
+        for i, company in enumerate(company_list, 1):
+            plt.subplot(2, 2, i)
+            df.loc[company]['Adj Close'].plot()
+            plt.ylabel('Adj Close')
+            plt.xlabel(None)
+            plt.title(f"Closing Price of {tech_list[i - 1]}")
+        plt.tight_layout()
+        plt.savefig(filepath1)
     # Volume chart
-    plt.figure(figsize=(15, 10))
-    plt.subplots_adjust(top=1.25, bottom=1.2)
-    for i, company in enumerate(company_list, 1):
-        plt.subplot(2, 2, i)
-        df.loc[company]['Volume'].plot()
-        plt.ylabel('Volume')
-        plt.xlabel(None)
-        plt.title(f"Sales Volume for {tech_list[i - 1]}")
-    plt.tight_layout()
-    plt.savefig('./static/image/tickers/volume_chart.png')
+    filename2 = f'volume_chart_{date}.png'
+    filepath2 = os.path.join('./static/image/tickers/', filename2)
+    fileurl2 = url_for('static', filename=f'image/tickers/{filename2}')
+    if not os.path.exists(filepath2):
+        plt.figure(figsize=(15, 10))
+        plt.subplots_adjust(top=1.25, bottom=1.2)
+        for i, company in enumerate(company_list, 1):
+            plt.subplot(2, 2, i)
+            df.loc[company]['Volume'].plot()
+            plt.ylabel('Volume')
+            plt.xlabel(None)
+            plt.title(f"Sales Volume for {tech_list[i - 1]}")
+        plt.tight_layout()
+        plt.savefig(filepath2)
     # MA (moving avage)
     ma_day = [10, 20, 50]
     for ma in ma_day:
@@ -154,90 +166,126 @@ def tickers_analysis():
             column_name = f"MA for {ma} days"
             mean_value = df.loc[company, 'Adj Close'].rolling(ma).mean()
             df.loc[(company, slice(None)), column_name] = mean_value.values
-    fig, axes = plt.subplots(nrows=2, ncols=2)
-    fig.set_figheight(10)
-    fig.set_figwidth(15)
-    df.loc["AAPL"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[0, 0])
-    axes[0, 0].set_title('APPLE')
-    df.loc["GOOG"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[0, 1])
-    axes[0, 1].set_title('GOOGLE')
-    df.loc["MSFT"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[1, 0])
-    axes[1, 0].set_title('MICROSOFT')
-    df.loc["AMZN"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[1, 1])
-    axes[1, 1].set_title('AMAZON')
-    axes[0, 0].legend()
-    axes[0, 1].legend()
-    axes[1, 0].legend()
-    axes[1, 1].legend()
-    fig.tight_layout()
-    plt.savefig('./static/image/tickers/MAs_chart.png')
-    # Percent change for each day
+
+    filename3 = f'MAs_chart_{date}.png'
+    filepath3 = os.path.join('./static/image/tickers/', filename3)
+    fileurl3 = url_for('static', filename=f'image/tickers/{filename3}')
+    if not os.path.exists(filepath3):
+        fig, axes = plt.subplots(nrows=2, ncols=2)
+        fig.set_figheight(10)
+        fig.set_figwidth(15)
+        df.loc["AAPL"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[0, 0])
+        axes[0, 0].set_title('APPLE')
+        df.loc["GOOG"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[0, 1])
+        axes[0, 1].set_title('GOOGLE')
+        df.loc["MSFT"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[1, 0])
+        axes[1, 0].set_title('MICROSOFT')
+        df.loc["AMZN"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[1, 1])
+        axes[1, 1].set_title('AMAZON')
+        axes[0, 0].legend()
+        axes[0, 1].legend()
+        axes[1, 0].legend()
+        axes[1, 1].legend()
+        fig.tight_layout()
+        plt.savefig(filepath3)
+    # Daily return
     for company in company_list:
         change_pct = df.loc[company, 'Adj Close'].pct_change()
         df.loc[(company, slice(None)), 'Daily Return'] = change_pct.values
-    fig, axes = plt.subplots(nrows=2, ncols=2)
-    fig.set_figheight(10)
-    fig.set_figwidth(15)
-    df.loc["AAPL"]['Daily Return'].plot(ax=axes[0, 0], legend=True, linestyle='--', marker='o')
-    axes[0, 0].set_title('APPLE')
-    df.loc["GOOG"]['Daily Return'].plot(ax=axes[0, 1], legend=True, linestyle='--', marker='o')
-    axes[0, 1].set_title('GOOGLE')
-    df.loc["MSFT"]['Daily Return'].plot(ax=axes[1, 0], legend=True, linestyle='--', marker='o')
-    axes[1, 0].set_title('MICROSOFT')
-    df.loc["AMZN"]['Daily Return'].plot(ax=axes[1, 1], legend=True, linestyle='--', marker='o')
-    axes[1, 1].set_title('AMAZON')
-    fig.tight_layout()
-    plt.savefig('./static/image/tickers/PC_line_chart.png')
 
-    plt.figure(figsize=(12, 9))
-    for i, company in enumerate(company_list, 1):
-        plt.subplot(2, 2, i)
-        df.loc[company, 'Daily Return'].hist(bins=50)
-        plt.xlabel('Daily Return')
-        plt.ylabel('Counts')
-        plt.title(f'{company_name[i - 1]}')
-    plt.tight_layout()
-    plt.savefig('./static/image/tickers/PC_column_chart.png')
-    # Phân tích sự tương quan giữa các giá trị Adj Close
+    filename4 = f'PC_line_chart_{date}.png'
+    filepath4 = os.path.join('./static/image/tickers/', filename4)
+    fileurl4 = url_for('static', filename=f'image/tickers/{filename4}')
+    if not os.path.exists(filepath4):
+        fig, axes = plt.subplots(nrows=2, ncols=2)
+        fig.set_figheight(10)
+        fig.set_figwidth(15)
+        df.loc["AAPL"]['Daily Return'].plot(ax=axes[0, 0], legend=True, linestyle='--', marker='o')
+        axes[0, 0].set_title('APPLE')
+        df.loc["GOOG"]['Daily Return'].plot(ax=axes[0, 1], legend=True, linestyle='--', marker='o')
+        axes[0, 1].set_title('GOOGLE')
+        df.loc["MSFT"]['Daily Return'].plot(ax=axes[1, 0], legend=True, linestyle='--', marker='o')
+        axes[1, 0].set_title('MICROSOFT')
+        df.loc["AMZN"]['Daily Return'].plot(ax=axes[1, 1], legend=True, linestyle='--', marker='o')
+        axes[1, 1].set_title('AMAZON')
+        fig.tight_layout()
+        plt.savefig(filepath4)
+
+    filename5 = f'PC_column_chart_{date}.png'
+    filepath5 = os.path.join('./static/image/tickers/', filename5)
+    fileurl5 = url_for('static', filename=f'image/tickers/{filename5}')
+    if not os.path.exists(filepath5):
+        plt.figure(figsize=(12, 9))
+        for i, company in enumerate(company_list, 1):
+            plt.subplot(2, 2, i)
+            df.loc[company, 'Daily Return'].hist(bins=50)
+            plt.xlabel('Daily Return')
+            plt.ylabel('Counts')
+            plt.title(f'{company_name[i - 1]}')
+        plt.tight_layout()
+        plt.savefig(filepath5)
+    # Correlation of adj close prices
     closing_df = pdr.get_data_yahoo(tech_list, start=start, end=end)['Adj Close']
     tech_rets = closing_df.pct_change()
-    sns.pairplot(tech_rets, kind='reg')
-    plt.savefig('./static/image/tickers/comparations_visual_analysis.png')
 
-    return_fig = sns.PairGrid(tech_rets.dropna())
-    return_fig.map_upper(plt.scatter, color='purple')
-    return_fig.map_lower(sns.kdeplot, cmap='cool_d')
-    return_fig.map_diag(plt.hist, bins=30)
-    plt.savefig('./static/image/tickers/comparations_daily_return.png')
+    filename6 = f'comparations_visual_analysis_{date}.png'
+    filepath6 = os.path.join('./static/image/tickers/', filename6)
+    fileurl6 = url_for('static', filename=f'image/tickers/{filename6}')
+    if not os.path.exists(filepath6):
+        sns.pairplot(tech_rets, kind='reg')
+        plt.savefig(filepath6)
 
-    returns_fig = sns.PairGrid(closing_df)
-    returns_fig.map_upper(plt.scatter, color='purple')
-    returns_fig.map_lower(sns.kdeplot, cmap='cool_d')
-    returns_fig.map_diag(plt.hist, bins=30)
-    plt.savefig('./static/image/tickers/comparations_close.png')
+    filename7 = f'comparations_daily_return_{date}.png'
+    filepath7 = os.path.join('./static/image/tickers/', filename7)
+    fileurl7 = url_for('static', filename=f'image/tickers/{filename7}')
+    if not os.path.exists(filepath7):
+        return_fig = sns.PairGrid(tech_rets.dropna())
+        return_fig.map_upper(plt.scatter, color='purple')
+        return_fig.map_lower(sns.kdeplot, cmap='cool_d')
+        return_fig.map_diag(plt.hist, bins=30)
+        plt.savefig(filepath7)
 
-    plt.figure(figsize=(12, 10))
-    plt.subplot(2, 2, 1)
-    sns.heatmap(tech_rets.corr(), annot=True, cmap='summer')
-    plt.title('Correlation of stock return')
-    plt.subplot(2, 2, 2)
-    sns.heatmap(closing_df.corr(), annot=True, cmap='summer')
-    plt.title('Correlation of stock closing price')
-    plt.savefig('./static/image/tickers/comparations_correlation.png')
+    filename8 = f'comparations_close_{date}.png'
+    filepath8 = os.path.join('./static/image/tickers/', filename8)
+    fileurl8 = url_for('static', filename=f'image/tickers/{filename8}')
+    if not os.path.exists(filepath8):
+        returns_fig = sns.PairGrid(closing_df)
+        returns_fig.map_upper(plt.scatter, color='purple')
+        returns_fig.map_lower(sns.kdeplot, cmap='cool_d')
+        returns_fig.map_diag(plt.hist, bins=30)
+        plt.savefig(filepath8)
 
+    filename9 = f'comparations_correlation_{date}.png'
+    filepath9 = os.path.join('./static/image/tickers/', filename9)
+    fileurl9 = url_for('static', filename=f'image/tickers/{filename9}')
+    if not os.path.exists(filepath9):
+        plt.figure(figsize=(12, 10))
+        plt.subplot(2, 2, 1)
+        sns.heatmap(tech_rets.corr(), annot=True, cmap='summer')
+        plt.title('Correlation of stock return')
+        plt.subplot(2, 2, 2)
+        sns.heatmap(closing_df.corr(), annot=True, cmap='summer')
+        plt.title('Correlation of stock closing price')
+        plt.savefig(filepath9)
     # Risk
-    rets = tech_rets.dropna()
-    area = np.pi * 20
-    plt.figure(figsize=(10, 8))
-    plt.scatter(rets.mean(), rets.std(), s=area)
-    plt.xlabel('Expected return')
-    plt.ylabel('Risk')
-    for label, x, y in zip(rets.columns, rets.mean(), rets.std()):
-        plt.annotate(label, xy=(x, y), xytext=(50, 50), textcoords='offset points', ha='right', va='bottom',
-                     arrowprops=dict(arrowstyle='-', color='blue', connectionstyle='arc3,rad=-0.3'))
-    plt.savefig('./static/image/tickers/risks.png')
+    filename10 = f'risks_{date}.png'
+    filepath10 = os.path.join('./static/image/tickers/', filename10)
+    fileurl10 = url_for('static', filename=f'image/tickers/{filename10}')
+    if not os.path.exists(filepath10):
+        rets = tech_rets.dropna()
+        area = np.pi * 20
+        plt.figure(figsize=(10, 8))
+        plt.scatter(rets.mean(), rets.std(), s=area)
+        plt.xlabel('Expected return')
+        plt.ylabel('Risk')
+        for label, x, y in zip(rets.columns, rets.mean(), rets.std()):
+            plt.annotate(label, xy=(x, y), xytext=(50, 50), textcoords='offset points', ha='right', va='bottom',
+                         arrowprops=dict(arrowstyle='-', color='blue', connectionstyle='arc3,rad=-0.3'))
+        plt.savefig(filepath10)
 
-    return render_template('tickers_analysis.html')
+    return render_template('tickers_analysis.html', tech_list=tech_list, fileurl1=fileurl1, fileurl2=fileurl2,
+                           fileurl3=fileurl3, fileurl4=fileurl4, fileurl5=fileurl5, fileurl6=fileurl6, fileurl7=fileurl7,
+                           fileurl8=fileurl8, fileurl9=fileurl9, fileurl10=fileurl10)
 
 
 @app.route('/ticker/<ticker>')

@@ -151,23 +151,23 @@ for company in company_list:
 # plt.show()
 
 ###################################################################################################
-# Phân tích sự tương quan giữa các giá trị Adj Close
-# Lưu giá trị Adj Close của 4 công ty thằng 1 data frame riêng
-closing_df = pdr.get_data_yahoo(tech_list, start=start, end=end)['Adj Close']
-print(closing_df)
-
-# Make a new tech returns DataFrame
-tech_rets = closing_df.pct_change()
-# print(tech_rets.head(50))
-
-# Comparing Google to itself should show a perfectly linear relationship
-sns.jointplot(x='GOOG', y='GOOG', data=tech_rets, kind='scatter', color='seagreen')
-plt.show()
-
-# use joinplot to compare the daily returns of Google and Microsoft
-sns.jointplot(x='GOOG', y='MSFT', data=tech_rets, kind='scatter')
-plt.show()
-
+# # Phân tích sự tương quan giữa các giá trị Adj Close
+# # Lưu giá trị Adj Close của 4 công ty thằng 1 data frame riêng
+# closing_df = pdr.get_data_yahoo(tech_list, start=start, end=end)['Adj Close']
+# print(closing_df)
+#
+# # Make a new tech returns DataFrame
+# tech_rets = closing_df.pct_change()
+# # print(tech_rets.head(50))
+#
+# # Comparing Google to itself should show a perfectly linear relationship
+# sns.jointplot(x='GOOG', y='GOOG', data=tech_rets, kind='scatter', color='seagreen')
+# plt.show()
+#
+# # use joinplot to compare the daily returns of Google and Microsoft
+# sns.jointplot(x='GOOG', y='MSFT', data=tech_rets, kind='scatter')
+# plt.show()
+#
 # # use pairplot for automatic visual analysis of all the comparisons
 # sns.pairplot(tech_rets, kind='reg')
 # plt.show()

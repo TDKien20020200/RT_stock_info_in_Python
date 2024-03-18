@@ -14,8 +14,8 @@ yf.pdr_override()
 from datetime import datetime
 
 from sklearn.preprocessing import MinMaxScaler
-from keras.models import Sequential
-from keras.layers import Dense, LSTM
+# from keras.models import Sequential
+# from keras.layers import Dense, LSTM
 
 tech_list = ['AAPL', 'GOOG', 'MSFT', 'AMZN']
 
@@ -39,12 +39,12 @@ df = pd.concat(data.values(), keys=data.keys(), axis=0)
 # Thống kê:
 
 # print(df.tail(50))
-
+#
 # # Summary Stats
 # print(df.loc["AAPL"].describe())  # Use df.loc["AAPL"] to access the AAPL DataFrame
 #
 # print(df.loc["AAPL"].info())
-#
+
 # # Giá đóng cửa
 # plt.figure(figsize=(15, 10))
 # plt.subplots_adjust(top=1.25, bottom=1.2)
@@ -58,7 +58,7 @@ df = pd.concat(data.values(), keys=data.keys(), axis=0)
 #
 # plt.tight_layout()
 # plt.show()
-#
+
 # # Tổng khối lượng cổ phiếu được giao dịch mỗi ngày
 # plt.figure(figsize=(15, 10))
 # plt.subplots_adjust(top=1.25, bottom=1.2)
@@ -154,19 +154,20 @@ for company in company_list:
 # Phân tích sự tương quan giữa các giá trị Adj Close
 # Lưu giá trị Adj Close của 4 công ty thằng 1 data frame riêng
 closing_df = pdr.get_data_yahoo(tech_list, start=start, end=end)['Adj Close']
+print(closing_df)
 
 # Make a new tech returns DataFrame
 tech_rets = closing_df.pct_change()
 # print(tech_rets.head(50))
-#
-# # Comparing Google to itself should show a perfectly linear relationship
-# sns.jointplot(x='GOOG', y='GOOG', data=tech_rets, kind='scatter', color='seagreen')
-# plt.show()
-#
-# # use joinplot to compare the daily returns of Google and Microsoft
-# sns.jointplot(x='GOOG', y='MSFT', data=tech_rets, kind='scatter')
-# plt.show()
-#
+
+# Comparing Google to itself should show a perfectly linear relationship
+sns.jointplot(x='GOOG', y='GOOG', data=tech_rets, kind='scatter', color='seagreen')
+plt.show()
+
+# use joinplot to compare the daily returns of Google and Microsoft
+sns.jointplot(x='GOOG', y='MSFT', data=tech_rets, kind='scatter')
+plt.show()
+
 # # use pairplot for automatic visual analysis of all the comparisons
 # sns.pairplot(tech_rets, kind='reg')
 # plt.show()
@@ -201,13 +202,13 @@ tech_rets = closing_df.pct_change()
 # sns.heatmap(closing_df.corr(), annot=True, cmap='summer')
 # plt.title('Correlation of stock closing price')
 # plt.show()
-
-###############################################################################################
-# Rủi ro với từng công ty
-rets = tech_rets.dropna()
-
-area = np.pi * 20
-
+#
+# ###############################################################################################
+# # Rủi ro với từng công ty
+# rets = tech_rets.dropna()
+#
+# area = np.pi * 20
+#
 # plt.figure(figsize=(10, 8))
 # plt.scatter(rets.mean(), rets.std(), s=area)
 # plt.xlabel('Expected return')
@@ -247,80 +248,80 @@ scaled_data = scaler.fit_transform(dataset)
 # print(scaled_data)
 
 
-# Create the training data set
-# Create the scaled training data set
-train_data = scaled_data[0:int(training_data_len), :]
-# Split the data into x_train and y_train data sets
-x_train = []
-y_train = []
-
-for i in range(60, len(train_data)):
-    x_train.append(train_data[i - 60:i, 0])
-    y_train.append(train_data[i, 0])
-    # if i <= 61:
-    #     print(x_train)
-    #     print(y_train)
-    #     print()
-
-# Convert the x_train and y_train to numpy arrays
-x_train, y_train = np.array(x_train), np.array(y_train)
-
-# Reshape the data
-x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
-
-
-
-
-# Build the LSTM model
-model = Sequential()
-model.add(LSTM(128, return_sequences=True, input_shape= (x_train.shape[1], 1)))
-model.add(LSTM(64, return_sequences=False))
-model.add(Dense(25))
-model.add(Dense(1))
-
-# Compile the model
-model.compile(optimizer='adam', loss='mean_squared_error')
-
-# Train the model
-model.fit(x_train, y_train, batch_size=1, epochs=1)
-
-# Create the testing data set
-# Create a new array containing scaled values from index 1543 to 2002
-test_data = scaled_data[training_data_len - 60:, :]
-# Create the data sets x_test and y_test
-x_test = []
-y_test = dataset[training_data_len:, :]
-for i in range(60, len(test_data)):
-    x_test.append(test_data[i - 60:i, 0])
-
-# Convert the data to a numpy array
-x_test = np.array(x_test)
-
-# Reshape the data
-x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
-
-# Get the models predicted price values
-predictions = model.predict(x_test)
-predictions = scaler.inverse_transform(predictions)
-
-# Get the root mean squared error (RMSE)
-rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
-# print(rmse)
-
-
-# Plot the data
-train = data[:training_data_len]
-valid = data[training_data_len:]
-valid['Predictions'] = predictions
-print(valid)
-
-# Visualize the data
-plt.figure(figsize=(16,6))
-plt.title('Model')
-plt.xlabel('Date', fontsize=18)
-plt.ylabel('Close Price USD ($)', fontsize=18)
-plt.plot(train['Close'])
-plt.plot(valid[['Close', 'Predictions']])
-plt.legend(['Train', 'Val', 'Predictions'], loc='lower right')
-plt.show()
+# # Create the training data set
+# # Create the scaled training data set
+# train_data = scaled_data[0:int(training_data_len), :]
+# # Split the data into x_train and y_train data sets
+# x_train = []
+# y_train = []
+#
+# for i in range(60, len(train_data)):
+#     x_train.append(train_data[i - 60:i, 0])
+#     y_train.append(train_data[i, 0])
+#     # if i <= 61:
+#     #     print(x_train)
+#     #     print(y_train)
+#     #     print()
+#
+# # Convert the x_train and y_train to numpy arrays
+# x_train, y_train = np.array(x_train), np.array(y_train)
+#
+# # Reshape the data
+# x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+#
+#
+#
+#
+# # Build the LSTM model
+# model = Sequential()
+# model.add(LSTM(128, return_sequences=True, input_shape= (x_train.shape[1], 1)))
+# model.add(LSTM(64, return_sequences=False))
+# model.add(Dense(25))
+# model.add(Dense(1))
+#
+# # Compile the model
+# model.compile(optimizer='adam', loss='mean_squared_error')
+#
+# # Train the model
+# model.fit(x_train, y_train, batch_size=1, epochs=1)
+#
+# # Create the testing data set
+# # Create a new array containing scaled values from index 1543 to 2002
+# test_data = scaled_data[training_data_len - 60:, :]
+# # Create the data sets x_test and y_test
+# x_test = []
+# y_test = dataset[training_data_len:, :]
+# for i in range(60, len(test_data)):
+#     x_test.append(test_data[i - 60:i, 0])
+#
+# # Convert the data to a numpy array
+# x_test = np.array(x_test)
+#
+# # Reshape the data
+# x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+#
+# # Get the models predicted price values
+# predictions = model.predict(x_test)
+# predictions = scaler.inverse_transform(predictions)
+#
+# # Get the root mean squared error (RMSE)
+# rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
+# # print(rmse)
+#
+#
+# # Plot the data
+# train = data[:training_data_len]
+# valid = data[training_data_len:]
+# valid['Predictions'] = predictions
+# print(valid)
+#
+# # Visualize the data
+# plt.figure(figsize=(16,6))
+# plt.title('Model')
+# plt.xlabel('Date', fontsize=18)
+# plt.ylabel('Close Price USD ($)', fontsize=18)
+# plt.plot(train['Close'])
+# plt.plot(valid[['Close', 'Predictions']])
+# plt.legend(['Train', 'Val', 'Predictions'], loc='lower right')
+# plt.show()
 

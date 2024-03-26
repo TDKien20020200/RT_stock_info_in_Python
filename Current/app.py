@@ -97,8 +97,8 @@ def printTrainVal(train_dataloader, valid_dataloader):
             best_valid_loss = valid_loss
             torch.save(model, 'saved_weights.pt')
 
-        print("Epoch ", epoch + 1)
-        print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
+        # print("Epoch ", epoch + 1)
+        # print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
 
 
 def bestModel():
@@ -119,6 +119,14 @@ def tickers_analysis():
 
     now = datetime.now()
     date = now.strftime('%d') + now.strftime('%m')
+
+    image_directory = './static/image/tickers/'
+    for filename in os.listdir(image_directory):
+        if filename.endswith('.png'):
+            file_date = filename[-8:]
+            if file_date[0:4] != date:
+                file_path = os.path.join(image_directory, filename)
+                os.remove(file_path)
 
     for stock in tech_list:
         data[stock] = yf.download(stock, start, end)
@@ -228,14 +236,14 @@ def tickers_analysis():
     closing_df = pdr.get_data_yahoo(tech_list, start=start, end=end)['Adj Close']
     tech_rets = closing_df.pct_change()
 
-    filename6 = f'comparations_visual_analysis_{date}.png'
+    filename6 = f'comparations_visual_analysis_chart_{date}.png'
     filepath6 = os.path.join('./static/image/tickers/', filename6)
     fileurl6 = url_for('static', filename=f'image/tickers/{filename6}')
     if not os.path.exists(filepath6):
         sns.pairplot(tech_rets, kind='reg')
         plt.savefig(filepath6)
 
-    filename7 = f'comparations_daily_return_{date}.png'
+    filename7 = f'comparations_daily_return_chart_{date}.png'
     filepath7 = os.path.join('./static/image/tickers/', filename7)
     fileurl7 = url_for('static', filename=f'image/tickers/{filename7}')
     if not os.path.exists(filepath7):
@@ -245,7 +253,7 @@ def tickers_analysis():
         return_fig.map_diag(plt.hist, bins=30)
         plt.savefig(filepath7)
 
-    filename8 = f'comparations_close_{date}.png'
+    filename8 = f'comparations_close_chart_{date}.png'
     filepath8 = os.path.join('./static/image/tickers/', filename8)
     fileurl8 = url_for('static', filename=f'image/tickers/{filename8}')
     if not os.path.exists(filepath8):
@@ -255,7 +263,7 @@ def tickers_analysis():
         returns_fig.map_diag(plt.hist, bins=30)
         plt.savefig(filepath8)
 
-    filename9 = f'comparations_correlation_{date}.png'
+    filename9 = f'comparations_correlation_chart_{date}.png'
     filepath9 = os.path.join('./static/image/tickers/', filename9)
     fileurl9 = url_for('static', filename=f'image/tickers/{filename9}')
     if not os.path.exists(filepath9):
@@ -268,7 +276,7 @@ def tickers_analysis():
         plt.title('Correlation of stock closing price')
         plt.savefig(filepath9)
     # Risk
-    filename10 = f'risks_{date}.png'
+    filename10 = f'risks_chart_{date}.png'
     filepath10 = os.path.join('./static/image/tickers/', filename10)
     fileurl10 = url_for('static', filename=f'image/tickers/{filename10}')
     if not os.path.exists(filepath10):
@@ -295,7 +303,6 @@ def ticker_detail(ticker):
     current_price = data.iloc[-1].Close
     open_price = data.iloc[-1].Open
     volume = data.iloc[-1].Volume
-
     chart_data = {
         'x': data.index.strftime('%Y-%m-%d').tolist(),
         'open': data['Open'].tolist(),
@@ -303,31 +310,56 @@ def ticker_detail(ticker):
         'low': data['Low'].tolist(),
         'close': data['Close'].tolist()
     }
+    now = datetime.now()
+    date = now.strftime('%d') + now.strftime('%m')
+    image_directory = './static/image/'
+    for filename in os.listdir(image_directory):
+        if filename.endswith('.png'):
+            file_date = filename[-13:]
+            if file_date[0:4] != date or file_date[6:10] != ticker:
+                file_path = os.path.join(image_directory, filename)
+                os.remove(file_path)
 
     # Filter and evaluate data
     # Daily Chart
-    data.plot(subplots=True, figsize=(14.5, 6.5))
-    plt.title('Daily Chart', y=8.2)
-    plt.savefig('./static/image/daily_chart.png')
+    filename1 = f'daily_chart_{date}_{ticker}.png'
+    filepath1 = os.path.join('./static/image/', filename1)
+    fileurl1 = url_for('static', filename=f'image/{filename1}')
+    if not os.path.exists(filepath1):
+        data.plot(subplots=True, figsize=(14.5, 6.5))
+        plt.title('Daily Chart', y=8.2)
+        plt.savefig(filepath1)
     # Weekly Chart
-    data.asfreq('W', method='ffill').plot(subplots=True, figsize=(14.5, 6.5), style='-')
-    plt.title('Weekly Chart', y=8.2)
-    plt.savefig('./static/image/weekly_chart.png')
+    filename2 = f'weekly_chart_{date}_{ticker}.png'
+    filepath2 = os.path.join('./static/image/', filename2)
+    fileurl2 = url_for('static', filename=f'image/{filename2}')
+    if not os.path.exists(filepath2):
+        data.asfreq('W', method='ffill').plot(subplots=True, figsize=(14.5, 6.5), style='-')
+        plt.title('Weekly Chart', y=8.2)
+        plt.savefig(filepath2)
 
     # Calculate MAs
     ma_day = [10, 20, 50]
     for ma in ma_day:
         col_name = f'MA for {ma} days'
         data[col_name] = data['Close'].rolling(ma).mean()
-    data[['Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days']].plot(figsize=(14.5, 6.5))
-    plt.title('Comparison of Moving Averages and Close')
-    plt.savefig('./static/image/MAs_chart.png')
+    filename3 = f'MAs_chart_{date}_{ticker}.png'
+    filepath3 = os.path.join('./static/image/', filename3)
+    fileurl3 = url_for('static', filename=f'image/{filename3}')
+    if not os.path.exists(filepath3):
+        data[['Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days']].plot(figsize=(14.5, 6.5))
+        plt.title('Comparison of Moving Averages and Close')
+        plt.savefig(filepath3)
 
     # Dùng hàm pct_change() để tìm phần trăm thay đổi của giá Close mỗi ngày
     data['Daily_Return'] = data['Close'].pct_change()
-    data[['Daily_Return']].plot(legend=True, figsize=(14.5, 6.5))
-    plt.title('Daily Return Percentage')
-    plt.savefig('./static/image/daily_return_chart.png')
+    filename4 = f'daily_return_chart_{date}_{ticker}.png'
+    filepath4 = os.path.join('./static/image/', filename4)
+    fileurl4 = url_for('static', filename=f'image/{filename4}')
+    if not os.path.exists(filepath4):
+        data[['Daily_Return']].plot(legend=True, figsize=(14.5, 6.5))
+        plt.title('Daily Return Percentage')
+        plt.savefig(filepath4)
 
     ###############################################################################################################
     # Tạo dataset theo batch size trong pytorch
@@ -339,8 +371,8 @@ def ticker_detail(ticker):
     data2['High'] = scaler.transform(data2['High'].values.reshape(-1, 1))
     data2['Low'] = scaler.transform(data2['Low'].values.reshape(-1, 1))
     dataUse = data2[['Open', 'High', 'Low', 'Close']].values
-    # print(dataUse.shape)
-    # print(dataUse)
+    print(dataUse.shape)
+    print(dataUse)
 
     # chuẩn bị dữ liệu cho bài toán dự đoán giá cổ phiếu dựa trên giá cổ phiếu từ 10 ngày trước để dự
     # đoán giá cổ phiếu vào ngày tiếp theo
@@ -358,15 +390,24 @@ def ticker_detail(ticker):
     valid_set_size = int(np.round(valid_set_size_percentage / 100 * sequences.shape[0]))
     test_set_size = int(np.round(test_set_size_percentage / 100 * sequences.shape[0]))
     train_set_size = sequences.shape[0] - (valid_set_size + test_set_size)
+    # print("valid_set_size:", valid_set_size)
+    # print("test_set_size:", test_set_size)
+    # print("train_set_size:", train_set_size)
 
     x_train = sequences[:train_set_size, :-1, :]
     y_train = sequences[:train_set_size, -1, :]
+    # print("x_train:", x_train[0])
+    # print("y_train:", y_train[0])
 
     x_valid = sequences[train_set_size:train_set_size + valid_set_size, :-1, :]
     y_valid = sequences[train_set_size:train_set_size + valid_set_size, -1, :]
+    # print("x_valid:", x_valid[0])
+    # print("y_valid:", y_valid[0])
 
     x_test = sequences[train_set_size + test_set_size:, :-1, :]
     y_test = sequences[train_set_size + test_set_size:, -1, :]
+    # print("x_test:", x_test[0])
+    # print("y_test:", y_test[0])
 
     # DataLoader
     # Tạo Trình tải dữ liệu: xác định các trình tải dữ liệu để tải tập dữ liệu theo từng batch với batch size = 32
@@ -383,7 +424,9 @@ def ticker_detail(ticker):
     valid_dataloader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
 
     # Mô hình huấn luyện
-    printTrainVal(train_dataloader, valid_dataloader)
+    for i in range(1, 20):
+        printTrainVal(train_dataloader, valid_dataloader)
+        print(i)
 
     modelUse = bestModel()
 
@@ -395,18 +438,22 @@ def ticker_detail(ticker):
     y_test_pred = y_test_pred.numpy()[0]
 
     idx = 0
-    plt.figure(figsize=(14.5, 6.5))
-    plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test.shape[0]),
-             y_test[:, idx], color='black', label='test target')
+    filename5 = f'prediction_chart_{date}_{ticker}.png'
+    filepath5 = os.path.join('./static/image/', filename5)
+    fileurl5 = url_for('static', filename=f'image/{filename5}')
+    if not os.path.exists(filepath5):
+        plt.figure(figsize=(14.5, 6.5))
+        plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test.shape[0]),
+                 y_test[:, idx], color='black', label='test target')
 
-    plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test_pred.shape[0]),
-             y_test_pred[:, idx], color='green', label='test prediction')
+        plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test_pred.shape[0]),
+                 y_test_pred[:, idx], color='green', label='test prediction')
 
-    plt.title('Future stock prices')
-    plt.xlabel('time [days]')
-    plt.ylabel('normalized price')
-    plt.legend(loc='best')
-    plt.savefig('./static/image/prediction_chart.png')
+        plt.title('Predicted stock prices')
+        plt.xlabel('time [days]')
+        plt.ylabel('normalized price')
+        plt.legend(loc='best')
+        plt.savefig(filepath5)
 
     dataShowHis = data.tail(30)
     data_list = dataShowHis.reset_index().to_dict(orient='records')
@@ -448,12 +495,12 @@ def ticker_detail(ticker):
     col_close = data_pred.pop('Date')
     data_pred.insert(0, 'Date', col_close)
     pred_data_list = data_pred.reset_index().to_dict(orient='records')
-    print(pred_data_list)
 
     # Truyền dữ liệu cho template
     return render_template('ticker_detail.html', ticker=ticker, current_price=current_price, open_price=open_price,
                            volume=volume, data_list=data_list, chart_data=chart_data,
-                           data_chart_predicted=data_chart_predicted, pred_data_list=pred_data_list)
+                           data_chart_predicted=data_chart_predicted, pred_data_list=pred_data_list,
+                           fileurl1=fileurl1, fileurl2=fileurl2, fileurl3=fileurl3, fileurl4=fileurl4, fileurl5=fileurl5)
 
 
 @app.route('/get_stock_data', methods=['POST'])

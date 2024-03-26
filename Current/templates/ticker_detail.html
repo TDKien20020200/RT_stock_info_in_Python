@@ -195,7 +195,7 @@
             $('#history-data').hide();
             $('#overview-chart-container').hide();
             $('#daily-chart-container').show();
-            openImage('{{ url_for('static', filename='image/daily_chart.png') }}', "daily-chart-image", "daily-chart-container")
+            openImage("{{ fileurl1 }}", "daily-chart-image", "daily-chart-container")
             $('#weekly-chart-container').hide();
             $('#ma-chart-container').hide();
             $('#percentage-change-container').hide();
@@ -209,7 +209,7 @@
             $('#overview-chart-container').hide();
             $('#daily-chart-container').hide();
             $('#weekly-chart-container').show();
-            openImage('{{ url_for('static', filename='image/weekly_chart.png') }}', "weekly-chart-image", "weekly-chart-container")
+            openImage("{{ fileurl2 }}", "weekly-chart-image", "weekly-chart-container")
             $('#ma-chart-container').hide();
             $('#percentage-change-container').hide();
             $('#predict-visualize-container').hide();
@@ -223,7 +223,7 @@
             $('#daily-chart-container').hide();
             $('#weekly-chart-container').hide();
             $('#ma-chart-container').show();
-            openImage('{{ url_for('static', filename='image/MAs_chart.png') }}', "ma-chart-image", "ma-chart-container")
+            openImage("{{ fileurl3 }}", "ma-chart-image", "ma-chart-container")
             $('#percentage-change-container').hide();
             $('#predict-visualize-container').hide();
             $('#predict-candlestick-container').hide();
@@ -237,7 +237,7 @@
             $('#weekly-chart-container').hide();
             $('#ma-chart-container').hide();
             $('#percentage-change-container').show();
-            openImage('{{ url_for('static', filename='image/daily_return_chart.png') }}', "percentage-change-image", "percentage-change-container")
+            openImage("{{ fileurl4 }}", "percentage-change-image", "percentage-change-container")
             $('#predict-visualize-container').hide();
             $('#predict-candlestick-container').hide();
             $('#pred-data').hide();
@@ -251,7 +251,7 @@
             $('#ma-chart-container').hide();
             $('#percentage-change-container').hide();
             $('#predict-visualize-container').show();
-            openImage('{{ url_for('static', filename='image/prediction_chart.png') }}', "predict-visualize-image", "predict-visualize-container")
+            openImage("{{ fileurl5 }}", "predict-visualize-image", "predict-visualize-container")
             $('#predict-candlestick-container').hide();
             $('#pred-data').hide();
         });

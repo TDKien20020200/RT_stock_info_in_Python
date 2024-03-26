@@ -36,6 +36,12 @@ $(document).ready(function () {
     $('#tickers-grid').on('click', '.detail-button', function() {
         var tickerSymbol = $(this).data('ticker');
         window.location.href = "/ticker/" + tickerSymbol;
+        const progressBar = document.getElementsByClassName('progress-bar')[0]
+        setInterval(() => {
+            const computedStyle = getComputedStyle(progressBar)
+            const width = parseFloat(computedStyle.getPropertyValue('--width')) || 0
+            progressBar.style.setProperty('--width', width + .1)
+        }, 150)
     });
 
     $('#tickers-grid').on('click', '.remove-btn', function() {
@@ -56,7 +62,7 @@ function addTickerToGrid(ticker) {
             <p id="${ticker}-price"></p>
             <p id="${ticker}-pct"></p>
             <button class="btn btn-primary remove-btn" data-ticker="${ticker}">Remove</button>
-            <button class="btn btn-primary detail-button" data-ticker="${ticker}">Detail</button>
+            <button class="btn btn-primary detail-button" data-ticker="${ticker}" data-bs-toggle="modal" data-bs-target="#progress-modal">Detail</button>
         </div>
     `);
 }

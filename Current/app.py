@@ -22,6 +22,9 @@ from datetime import datetime
 yf.pdr_override()
 import os
 
+# from keras.models import Sequential
+# from keras.layers import Dense, LSTM
+
 app = Flask(__name__, template_folder='templates')
 
 
@@ -97,8 +100,8 @@ def printTrainVal(train_dataloader, valid_dataloader):
             best_valid_loss = valid_loss
             torch.save(model, 'saved_weights.pt')
 
-        # print("Epoch ", epoch + 1)
-        # print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
+        print("Epoch ", epoch + 1)
+        print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
 
 
 def bestModel():
@@ -371,8 +374,8 @@ def ticker_detail(ticker):
     data2['High'] = scaler.transform(data2['High'].values.reshape(-1, 1))
     data2['Low'] = scaler.transform(data2['Low'].values.reshape(-1, 1))
     dataUse = data2[['Open', 'High', 'Low', 'Close']].values
-    print(dataUse.shape)
-    print(dataUse)
+    # print(dataUse.shape)
+    # print(dataUse)
 
     # chuẩn bị dữ liệu cho bài toán dự đoán giá cổ phiếu dựa trên giá cổ phiếu từ 10 ngày trước để dự
     # đoán giá cổ phiếu vào ngày tiếp theo
@@ -386,29 +389,21 @@ def ticker_detail(ticker):
     # Tách dữ liệu toàn bộ tập dữ liệu thành ba phần. 80% cho tập huấn luyện (train), 10% cho tập xác thực (valid) và 10% còn lại cho tập kiểm thử (test):
     valid_set_size_percentage = 10
     test_set_size_percentage = 10
-
     valid_set_size = int(np.round(valid_set_size_percentage / 100 * sequences.shape[0]))
     test_set_size = int(np.round(test_set_size_percentage / 100 * sequences.shape[0]))
     train_set_size = sequences.shape[0] - (valid_set_size + test_set_size)
-    # print("valid_set_size:", valid_set_size)
-    # print("test_set_size:", test_set_size)
-    # print("train_set_size:", train_set_size)
-
     x_train = sequences[:train_set_size, :-1, :]
     y_train = sequences[:train_set_size, -1, :]
-    # print("x_train:", x_train[0])
-    # print("y_train:", y_train[0])
-
     x_valid = sequences[train_set_size:train_set_size + valid_set_size, :-1, :]
     y_valid = sequences[train_set_size:train_set_size + valid_set_size, -1, :]
-    # print("x_valid:", x_valid[0])
-    # print("y_valid:", y_valid[0])
-
     x_test = sequences[train_set_size + test_set_size:, :-1, :]
     y_test = sequences[train_set_size + test_set_size:, -1, :]
-    # print("x_test:", x_test[0])
-    # print("y_test:", y_test[0])
-
+    # print('x_train.shape = ', x_train.shape)
+    # print('y_train.shape = ', y_train.shape)
+    # print('x_valid.shape = ', x_valid.shape)
+    # print('y_valid.shape = ', y_valid.shape)
+    # print('x_test.shape = ', x_test.shape)
+    # print('y_test.shape = ', y_test.shape)
     # DataLoader
     # Tạo Trình tải dữ liệu: xác định các trình tải dữ liệu để tải tập dữ liệu theo từng batch với batch size = 32
     x_train = torch.tensor(x_train).float()
@@ -495,6 +490,81 @@ def ticker_detail(ticker):
     col_close = data_pred.pop('Date')
     data_pred.insert(0, 'Date', col_close)
     pred_data_list = data_pred.reset_index().to_dict(orient='records')
+
+    # # LSTM2
+    # # Get the stock quote
+    # df = pdr.get_data_yahoo(ticker, start='2012-01-01', end=datetime.now())
+    # # Create a new dataframe with only the 'Close column
+    # data = df.filter(['Close'])
+    # # Convert the dataframe to a numpy array
+    # dataset = data.values
+    # # Get the number of rows to train the model on
+    # training_data_len = int(np.ceil(len(dataset) * .95))
+    # scaler = MinMaxScaler(feature_range=(0, 1))
+    # scaled_data = scaler.fit_transform(dataset)
+    # # Create the training data set
+    # # Create the scaled training data set
+    # train_data = scaled_data[0:int(training_data_len), :]
+    # # Split the data into x_train and y_train data sets
+    # x_train = []
+    # y_train = []
+    # for i in range(60, len(train_data)):
+    #     x_train.append(train_data[i - 60:i, 0])
+    #     y_train.append(train_data[i, 0])
+    #     if i <= 61:
+    #         print(x_train)
+    #         print(y_train)
+    #         print()
+    # # Convert the x_train and y_train to numpy arrays
+    # x_train, y_train = np.array(x_train), np.array(y_train)
+    # # Reshape the data
+    # x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+    # # Build the LSTM model
+    # model = Sequential()
+    # model.add(LSTM(128, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+    # model.add(LSTM(64, return_sequences=False))
+    # model.add(Dense(25))
+    # model.add(Dense(1))
+    # # Compile the model
+    # model.compile(optimizer='adam', loss='mean_squared_error')
+    # # Train the model
+    # model.fit(x_train, y_train, batch_size=1, epochs=1)
+    # # Create the testing data set
+    # # Create a new array containing scaled values from index 1543 to 2002
+    # test_data = scaled_data[training_data_len - 60:, :]
+    # # Create the data sets x_test and y_test
+    # x_test = []
+    # y_test = dataset[training_data_len:, :]
+    # for i in range(60, len(test_data)):
+    #     x_test.append(test_data[i - 60:i, 0])
+    # # Convert the data to a numpy array
+    # x_test = np.array(x_test)
+    # # Reshape the data
+    # x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+    # # Get the models predicted price values
+    # predictions = model.predict(x_test)
+    # predictions = scaler.inverse_transform(predictions)
+    # # Get the root mean squared error (RMSE)
+    # rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
+    # print(rmse)
+    # # Plot the data
+    # train = data[:training_data_len]
+    # valid = data[training_data_len:]
+    # valid['Predictions'] = predictions
+    # # print(valid)
+    # # Visualize the data
+    # filename6 = f'prediction_chart_lstm2_{date}_{ticker}.png'
+    # filepath6 = os.path.join('./static/image/', filename6)
+    # fileurl6 = url_for('static', filename=f'image/{filename6}')
+    # if not os.path.exists(filepath6):
+    #     plt.figure(figsize=(14.5, 6.5))
+    #     plt.title('Model')
+    #     plt.xlabel('Date', fontsize=18)
+    #     plt.ylabel('Close Price USD ($)', fontsize=18)
+    #     plt.plot(train['Close'])
+    #     plt.plot(valid[['Close', 'Predictions']])
+    #     plt.legend(['Train', 'Val', 'Predictions'], loc='lower right')
+    #     plt.savefig(filepath6)
 
     # Truyền dữ liệu cho template
     return render_template('ticker_detail.html', ticker=ticker, current_price=current_price, open_price=open_price,

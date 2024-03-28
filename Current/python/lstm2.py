@@ -11,7 +11,7 @@ from pandas_datareader.data import DataReader
 from pandas_datareader import data as pdr
 
 yf.pdr_override()
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sklearn.preprocessing import MinMaxScaler
 # from keras.models import Sequential
@@ -225,14 +225,6 @@ for company in company_list:
 # Get the stock quote
 df = pdr.get_data_yahoo('AAPL', start='2022-01-01', end=datetime.now())
 
-# # Bieu dien Close
-# plt.figure(figsize=(16,6))
-# plt.title('Close Price History of Apple Inc.')
-# plt.plot(df['Close'])
-# plt.xlabel('Date', fontsize=18)
-# plt.ylabel('Close Price USD ($)', fontsize=18)
-# plt.show()
-
 # Create a new dataframe with only the 'Close column
 data = df.filter(['Close'])
 # Convert the dataframe to a numpy array
@@ -324,4 +316,18 @@ scaled_data = scaler.fit_transform(dataset)
 # plt.plot(valid[['Close', 'Predictions']])
 # plt.legend(['Train', 'Val', 'Predictions'], loc='lower right')
 # plt.show()
-
+#
+# last_60_days = scaled_data[-60:]
+#
+# future_predictions = []
+#
+# for _ in range(10):
+#     x = np.reshape(last_60_days, (1, last_60_days.shape[0], 1))
+#     prediction = model.predict(x)
+#     prediction = scaler.inverse_transform(prediction)
+#     future_predictions.append(prediction[0][0])
+#     last_60_days = np.append(last_60_days[1:], prediction[0])
+#
+# next_10_days = [(datetime.now() + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(1, 11)]
+# for date, price in zip(next_10_days, future_predictions):
+#     print(f"Date: {date}, Predicted Close Price: {price}")

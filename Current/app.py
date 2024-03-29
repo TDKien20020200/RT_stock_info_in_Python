@@ -22,8 +22,8 @@ from datetime import datetime
 yf.pdr_override()
 import os
 
-# from keras.models import Sequential
-# from keras.layers import Dense, LSTM
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
 
 app = Flask(__name__, template_folder='templates')
 
@@ -87,21 +87,26 @@ def evaluate(dataloader):
 
 
 def printTrainVal(train_dataloader, valid_dataloader):
-    n_epochs = 50
+    n_epochs = 150
     best_valid_loss = float('inf')
-
+    min_epoch = 0
+    min_train_loss = 1000
     for epoch in range(1, n_epochs + 1):
-
         train_loss = train(train_dataloader)
         valid_loss = evaluate(valid_dataloader)
 
         # save the best model
         if valid_loss < best_valid_loss:
+            min_epoch = epoch
+            min_train_loss = train_loss
             best_valid_loss = valid_loss
             torch.save(model, 'saved_weights.pt')
 
         print("Epoch ", epoch + 1)
         print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
+    print("epoch ", min_epoch, " có valid_loss = ", best_valid_loss, " có train_loss = ", min_train_loss)
+
+    return best_valid_loss
 
 
 def bestModel():
@@ -398,35 +403,34 @@ def ticker_detail(ticker):
     y_valid = sequences[train_set_size:train_set_size + valid_set_size, -1, :]
     x_test = sequences[train_set_size + test_set_size:, :-1, :]
     y_test = sequences[train_set_size + test_set_size:, -1, :]
-    # print('x_train.shape = ', x_train.shape)
-    # print('y_train.shape = ', y_train.shape)
-    # print('x_valid.shape = ', x_valid.shape)
-    # print('y_valid.shape = ', y_valid.shape)
-    # print('x_test.shape = ', x_test.shape)
-    # print('y_test.shape = ', y_test.shape)
     # DataLoader
     # Tạo Trình tải dữ liệu: xác định các trình tải dữ liệu để tải tập dữ liệu theo từng batch với batch size = 32
     x_train = torch.tensor(x_train).float()
     y_train = torch.tensor(y_train).float()
-
     x_valid = torch.tensor(x_valid).float()
     y_valid = torch.tensor(y_valid).float()
 
     train_dataset = TensorDataset(x_train, y_train)
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=False)
-
     valid_dataset = TensorDataset(x_valid, y_valid)
     valid_dataloader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
 
     # Mô hình huấn luyện
-    for i in range(1, 20):
-        printTrainVal(train_dataloader, valid_dataloader)
-        print(i)
+    best_valid_loss = 1000
+    count = 1
+    while count < 15:
+        print("Lần lặp", count)
+        valid_loss = printTrainVal(train_dataloader, valid_dataloader)
+        if best_valid_loss > valid_loss:
+            best_valid_loss = valid_loss
+        count = count + 1
+        if best_valid_loss < valid_loss:
+            break
+    # for i in range(1, 10):
+    #     printTrainVal(train_dataloader, valid_dataloader)
 
     modelUse = bestModel()
-
     x_test = torch.tensor(x_test).float()
-
     with torch.no_grad():
         y_test_pred = modelUse(x_test)
 
@@ -511,47 +515,57 @@ def ticker_detail(ticker):
     # for i in range(60, len(train_data)):
     #     x_train.append(train_data[i - 60:i, 0])
     #     y_train.append(train_data[i, 0])
-    #     if i <= 61:
-    #         print(x_train)
-    #         print(y_train)
-    #         print()
+    #     # if i <= 61:
+    #     #     print(x_train)
+    #     #     print(y_train)
+    #     #     print()
     # # Convert the x_train and y_train to numpy arrays
     # x_train, y_train = np.array(x_train), np.array(y_train)
     # # Reshape the data
     # x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
-    # # Build the LSTM model
-    # model = Sequential()
-    # model.add(LSTM(128, return_sequences=True, input_shape=(x_train.shape[1], 1)))
-    # model.add(LSTM(64, return_sequences=False))
-    # model.add(Dense(25))
-    # model.add(Dense(1))
-    # # Compile the model
-    # model.compile(optimizer='adam', loss='mean_squared_error')
-    # # Train the model
-    # model.fit(x_train, y_train, batch_size=1, epochs=1)
-    # # Create the testing data set
-    # # Create a new array containing scaled values from index 1543 to 2002
-    # test_data = scaled_data[training_data_len - 60:, :]
-    # # Create the data sets x_test and y_test
-    # x_test = []
-    # y_test = dataset[training_data_len:, :]
-    # for i in range(60, len(test_data)):
-    #     x_test.append(test_data[i - 60:i, 0])
-    # # Convert the data to a numpy array
-    # x_test = np.array(x_test)
-    # # Reshape the data
-    # x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
-    # # Get the models predicted price values
-    # predictions = model.predict(x_test)
-    # predictions = scaler.inverse_transform(predictions)
-    # # Get the root mean squared error (RMSE)
-    # rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
-    # print(rmse)
+    #
+    # count = 1
+    # minRmse = 20
+    # predictionsUse = 0
+    # while count < 5:
+    #     # Build the LSTM model
+    #     model = Sequential()
+    #     model.add(LSTM(128, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+    #     model.add(LSTM(64, return_sequences=False))
+    #     model.add(Dense(25))
+    #     model.add(Dense(1))
+    #     # Compile the model
+    #     model.compile(optimizer='adam', loss='mean_squared_error')
+    #     # Train the model
+    #     model.fit(x_train, y_train, batch_size=1, epochs=1)
+    #     # Create the testing data set
+    #     # Create a new array containing scaled values
+    #     test_data = scaled_data[training_data_len - 60:, :]
+    #     # Create the data sets x_test and y_test
+    #     x_test = []
+    #     y_test = dataset[training_data_len:, :]
+    #     for i in range(60, len(test_data)):
+    #         x_test.append(test_data[i - 60:i, 0])
+    #     # Convert the data to a numpy array
+    #     x_test = np.array(x_test)
+    #     # Reshape the data
+    #     x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+    #     # Get the models predicted price values
+    #     predictions = model.predict(x_test)
+    #     predictions = scaler.inverse_transform(predictions)
+    #     # Get the root mean squared error (RMSE)
+    #     rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
+    #     if rmse < minRmse:
+    #         minRmse = rmse
+    #         predictionsUse = predictions
+    #     print("lần ", count, ": rmse= ", rmse)
+    #     count = count + 1
+    #
     # # Plot the data
     # train = data[:training_data_len]
     # valid = data[training_data_len:]
-    # valid['Predictions'] = predictions
-    # # print(valid)
+    # valid['Predictions'] = predictionsUse
+    # print(valid)
     # # Visualize the data
     # filename6 = f'prediction_chart_lstm2_{date}_{ticker}.png'
     # filepath6 = os.path.join('./static/image/', filename6)

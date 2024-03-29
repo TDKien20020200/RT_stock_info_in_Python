@@ -41,7 +41,7 @@ $(document).ready(function () {
             const computedStyle = getComputedStyle(progressBar)
             const width = parseFloat(computedStyle.getPropertyValue('--width')) || 0
             progressBar.style.setProperty('--width', width + .1)
-        }, 150)
+        }, 300)
     });
 
     $('#tickers-grid').on('click', '.remove-btn', function() {

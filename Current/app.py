@@ -19,6 +19,7 @@ sns.set_style('whitegrid')
 from pandas_datareader.data import DataReader
 from pandas_datareader import data as pdr
 from datetime import datetime
+
 yf.pdr_override()
 import os
 
@@ -102,8 +103,8 @@ def printTrainVal(train_dataloader, valid_dataloader):
             best_valid_loss = valid_loss
             torch.save(model, 'saved_weights.pt')
 
-        print("Epoch ", epoch + 1)
-        print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
+        # print("Epoch ", epoch + 1)
+        # print(f'\tTrain Loss: {train_loss:.5f} | ' + f'\tVal Loss: {valid_loss:.5f}\n')
     print("epoch ", min_epoch, " có valid_loss = ", best_valid_loss, " có train_loss = ", min_train_loss)
 
     return best_valid_loss
@@ -112,6 +113,7 @@ def printTrainVal(train_dataloader, valid_dataloader):
 def bestModel():
     modelUse = torch.load('saved_weights.pt')
     return modelUse
+
 
 @app.route('/')
 def index():
@@ -300,7 +302,8 @@ def tickers_analysis():
         plt.savefig(filepath10)
 
     return render_template('tickers_analysis.html', tech_list=tech_list, fileurl1=fileurl1, fileurl2=fileurl2,
-                           fileurl3=fileurl3, fileurl4=fileurl4, fileurl5=fileurl5, fileurl6=fileurl6, fileurl7=fileurl7,
+                           fileurl3=fileurl3, fileurl4=fileurl4, fileurl5=fileurl5, fileurl6=fileurl6,
+                           fileurl7=fileurl7,
                            fileurl8=fileurl8, fileurl9=fileurl9, fileurl10=fileurl10)
 
 
@@ -324,7 +327,7 @@ def ticker_detail(ticker):
     for filename in os.listdir(image_directory):
         if filename.endswith('.png'):
             file_date = filename[-13:]
-            if file_date[0:4] != date or file_date[6:10] != ticker:
+            if file_date[0:4] != date:
                 file_path = os.path.join(image_directory, filename)
                 os.remove(file_path)
 
@@ -424,10 +427,8 @@ def ticker_detail(ticker):
         if best_valid_loss > valid_loss:
             best_valid_loss = valid_loss
         count = count + 1
-        if best_valid_loss < valid_loss:
+        if best_valid_loss < valid_loss and count > 2:
             break
-    # for i in range(1, 10):
-    #     printTrainVal(train_dataloader, valid_dataloader)
 
     modelUse = bestModel()
     x_test = torch.tensor(x_test).float()
@@ -440,19 +441,18 @@ def ticker_detail(ticker):
     filename5 = f'prediction_chart_{date}_{ticker}.png'
     filepath5 = os.path.join('./static/image/', filename5)
     fileurl5 = url_for('static', filename=f'image/{filename5}')
-    if not os.path.exists(filepath5):
-        plt.figure(figsize=(14.5, 6.5))
-        plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test.shape[0]),
-                 y_test[:, idx], color='black', label='test target')
+    plt.figure(figsize=(14.5, 6.5))
+    plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test.shape[0]),
+             y_test[:, idx], color='black', label='test target')
 
-        plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test_pred.shape[0]),
-                 y_test_pred[:, idx], color='green', label='test prediction')
+    plt.plot(np.arange(y_train.shape[0], y_train.shape[0] + y_test_pred.shape[0]),
+             y_test_pred[:, idx], color='green', label='test prediction')
 
-        plt.title('Predicted stock prices')
-        plt.xlabel('time [days]')
-        plt.ylabel('normalized price')
-        plt.legend(loc='best')
-        plt.savefig(filepath5)
+    plt.title('Predicted stock prices')
+    plt.xlabel('time [days]')
+    plt.ylabel('normalized price')
+    plt.legend(loc='best')
+    plt.savefig(filepath5)
 
     dataShowHis = data.tail(30)
     data_list = dataShowHis.reset_index().to_dict(orient='records')
@@ -484,7 +484,8 @@ def ticker_detail(ticker):
     pred_days = last_sequence.reshape(PRED_DAYS, 4).numpy()
     # inverse transform the predicted values
     pred_days = scaler.inverse_transform(pred_days)
-    date_range = pd.bdate_range(start=pd.Timestamp.today() + pd.Timedelta(days=1), periods=PRED_DAYS, freq='C', tz='America/New_York')
+    date_range = pd.bdate_range(start=pd.Timestamp.today() + pd.Timedelta(days=1), periods=PRED_DAYS, freq='C',
+                                tz='America/New_York')
 
     data_pred = pd.DataFrame(
         data=pred_days,
@@ -584,7 +585,8 @@ def ticker_detail(ticker):
     return render_template('ticker_detail.html', ticker=ticker, current_price=current_price, open_price=open_price,
                            volume=volume, data_list=data_list, chart_data=chart_data,
                            data_chart_predicted=data_chart_predicted, pred_data_list=pred_data_list,
-                           fileurl1=fileurl1, fileurl2=fileurl2, fileurl3=fileurl3, fileurl4=fileurl4, fileurl5=fileurl5)
+                           fileurl1=fileurl1, fileurl2=fileurl2, fileurl3=fileurl3, fileurl4=fileurl4,
+                           fileurl5=fileurl5)
 
 
 @app.route('/get_stock_data', methods=['POST'])

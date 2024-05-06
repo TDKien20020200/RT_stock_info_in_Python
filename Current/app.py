@@ -376,14 +376,9 @@ def ticker_detail(ticker):
     # Tạo dataset theo batch size trong pytorch
     # Chuẩn hóa dữ liệu
     data2 = dataYears.copy(deep=True)
-    scaler = MinMaxScaler(feature_range=(0, 15)).fit(data2['Low'].values.reshape(-1, 1))
-    data2['Close'] = scaler.transform(data2['Close'].values.reshape(-1, 1))
-    data2['Open'] = scaler.transform(data2['Open'].values.reshape(-1, 1))
-    data2['High'] = scaler.transform(data2['High'].values.reshape(-1, 1))
-    data2['Low'] = scaler.transform(data2['Low'].values.reshape(-1, 1))
+    scaler = MinMaxScaler(feature_range=(0, 15))
+    data2[['Close', 'Open', 'High', 'Low']] = scaler.fit_transform(data2[['Close', 'Open', 'High', 'Low']])
     dataUse = data2[['Open', 'High', 'Low', 'Close']].values
-    # print(dataUse.shape)
-    # print(dataUse)
 
     # chuẩn bị dữ liệu cho bài toán dự đoán giá cổ phiếu dựa trên giá cổ phiếu từ 10 ngày trước để dự
     # đoán giá cổ phiếu vào ngày tiếp theo
@@ -421,16 +416,24 @@ def ticker_detail(ticker):
     # Mô hình huấn luyện
     best_valid_loss = 1000
     count = 1
-    while count < 15:
+    modelUse = 0
+    numModel = 0
+    with open('saved_weights.pt', 'w') as f:
+        pass
+    while count < 21:
         print("Lần lặp", count)
         valid_loss = printTrainVal(train_dataloader, valid_dataloader)
         if best_valid_loss > valid_loss:
             best_valid_loss = valid_loss
+            modelUse = bestModel()
+            numModel = count
         count = count + 1
-        if best_valid_loss < valid_loss and count > 2:
-            break
+        # if best_valid_loss < valid_loss and count > 2:
+        #     break
 
-    modelUse = bestModel()
+    print("Với", count - 1, "lần chạy cho ", ticker, ", lần chạy thứ", numModel, "cho ra kết quả tối ưu nhất với "
+                                                                                 "valid_loss =", best_valid_loss)
+    # modelUse = bestModel()
     x_test = torch.tensor(x_test).float()
     with torch.no_grad():
         y_test_pred = modelUse(x_test)

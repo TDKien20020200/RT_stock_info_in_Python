@@ -22,9 +22,9 @@ from datetime import datetime
 
 yf.pdr_override()
 import os
+import json
 
-from keras.models import Sequential
-from keras.layers import Dense, LSTM
+from sklearn.metrics import (explained_variance_score, r2_score, mean_squared_error, mean_absolute_error)
 
 app = Flask(__name__, template_folder='templates')
 
@@ -88,7 +88,7 @@ def evaluate(dataloader):
 
 
 def printTrainVal(train_dataloader, valid_dataloader):
-    n_epochs = 150
+    n_epochs = 100
     best_valid_loss = float('inf')
     min_epoch = 0
     min_train_loss = 1000
@@ -115,196 +115,16 @@ def bestModel():
     return modelUse
 
 
+def resetSavedWeights():
+    if os.path.exists('saved_weights.pt'):
+        os.remove('saved_weights.pt')
+    with open('saved_weights.pt', 'w') as f:
+        pass
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
-@app.route('/tickers/analysis')
-def tickers_analysis():
-    tech_list = ['AAPL', 'GOOG', 'MSFT', 'AMZN']
-    end = datetime.now()
-    start = datetime(end.year - 2, end.month, end.day)
-    data = {}
-
-    now = datetime.now()
-    date = now.strftime('%d') + now.strftime('%m')
-
-    image_directory = './static/image/tickers/'
-    for filename in os.listdir(image_directory):
-        if filename.endswith('.png'):
-            file_date = filename[-8:]
-            if file_date[0:4] != date:
-                file_path = os.path.join(image_directory, filename)
-                os.remove(file_path)
-
-    for stock in tech_list:
-        data[stock] = yf.download(stock, start, end)
-    company_list = tech_list
-    company_name = ["APPLE", "GOOGLE", "MICROSOFT", "AMAZON"]
-
-    for company, com_name in zip(company_list, company_name):
-        data[company]['company_name'] = com_name
-
-    df = pd.concat(data.values(), keys=data.keys(), axis=0)
-    # Close chart
-    filename1 = f'adj_close_chart_{date}.png'
-    filepath1 = os.path.join('./static/image/tickers/', filename1)
-    fileurl1 = url_for('static', filename=f'image/tickers/{filename1}')
-    if not os.path.exists(filepath1):
-        plt.figure(figsize=(15, 10))
-        plt.subplots_adjust(top=1.25, bottom=1.2)
-        for i, company in enumerate(company_list, 1):
-            plt.subplot(2, 2, i)
-            df.loc[company]['Adj Close'].plot()
-            plt.ylabel('Adj Close')
-            plt.xlabel(None)
-            plt.title(f"Closing Price of {tech_list[i - 1]}")
-        plt.tight_layout()
-        plt.savefig(filepath1)
-    # Volume chart
-    filename2 = f'volume_chart_{date}.png'
-    filepath2 = os.path.join('./static/image/tickers/', filename2)
-    fileurl2 = url_for('static', filename=f'image/tickers/{filename2}')
-    if not os.path.exists(filepath2):
-        plt.figure(figsize=(15, 10))
-        plt.subplots_adjust(top=1.25, bottom=1.2)
-        for i, company in enumerate(company_list, 1):
-            plt.subplot(2, 2, i)
-            df.loc[company]['Volume'].plot()
-            plt.ylabel('Volume')
-            plt.xlabel(None)
-            plt.title(f"Sales Volume for {tech_list[i - 1]}")
-        plt.tight_layout()
-        plt.savefig(filepath2)
-    # MA (moving avage)
-    ma_day = [10, 20, 50]
-    for ma in ma_day:
-        for company in company_list:
-            column_name = f"MA for {ma} days"
-            mean_value = df.loc[company, 'Adj Close'].rolling(ma).mean()
-            df.loc[(company, slice(None)), column_name] = mean_value.values
-
-    filename3 = f'MAs_chart_{date}.png'
-    filepath3 = os.path.join('./static/image/tickers/', filename3)
-    fileurl3 = url_for('static', filename=f'image/tickers/{filename3}')
-    if not os.path.exists(filepath3):
-        fig, axes = plt.subplots(nrows=2, ncols=2)
-        fig.set_figheight(10)
-        fig.set_figwidth(15)
-        df.loc["AAPL"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[0, 0])
-        axes[0, 0].set_title('APPLE')
-        df.loc["GOOG"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[0, 1])
-        axes[0, 1].set_title('GOOGLE')
-        df.loc["MSFT"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[1, 0])
-        axes[1, 0].set_title('MICROSOFT')
-        df.loc["AMZN"].plot(y=['Adj Close', 'MA for 10 days', 'MA for 20 days', 'MA for 50 days'], ax=axes[1, 1])
-        axes[1, 1].set_title('AMAZON')
-        axes[0, 0].legend()
-        axes[0, 1].legend()
-        axes[1, 0].legend()
-        axes[1, 1].legend()
-        fig.tight_layout()
-        plt.savefig(filepath3)
-    # Daily return
-    for company in company_list:
-        change_pct = df.loc[company, 'Adj Close'].pct_change()
-        df.loc[(company, slice(None)), 'Daily Return'] = change_pct.values
-
-    filename4 = f'PC_line_chart_{date}.png'
-    filepath4 = os.path.join('./static/image/tickers/', filename4)
-    fileurl4 = url_for('static', filename=f'image/tickers/{filename4}')
-    if not os.path.exists(filepath4):
-        fig, axes = plt.subplots(nrows=2, ncols=2)
-        fig.set_figheight(10)
-        fig.set_figwidth(15)
-        df.loc["AAPL"]['Daily Return'].plot(ax=axes[0, 0], legend=True, linestyle='--', marker='o')
-        axes[0, 0].set_title('APPLE')
-        df.loc["GOOG"]['Daily Return'].plot(ax=axes[0, 1], legend=True, linestyle='--', marker='o')
-        axes[0, 1].set_title('GOOGLE')
-        df.loc["MSFT"]['Daily Return'].plot(ax=axes[1, 0], legend=True, linestyle='--', marker='o')
-        axes[1, 0].set_title('MICROSOFT')
-        df.loc["AMZN"]['Daily Return'].plot(ax=axes[1, 1], legend=True, linestyle='--', marker='o')
-        axes[1, 1].set_title('AMAZON')
-        fig.tight_layout()
-        plt.savefig(filepath4)
-
-    filename5 = f'PC_column_chart_{date}.png'
-    filepath5 = os.path.join('./static/image/tickers/', filename5)
-    fileurl5 = url_for('static', filename=f'image/tickers/{filename5}')
-    if not os.path.exists(filepath5):
-        plt.figure(figsize=(12, 9))
-        for i, company in enumerate(company_list, 1):
-            plt.subplot(2, 2, i)
-            df.loc[company, 'Daily Return'].hist(bins=50)
-            plt.xlabel('Daily Return')
-            plt.ylabel('Counts')
-            plt.title(f'{company_name[i - 1]}')
-        plt.tight_layout()
-        plt.savefig(filepath5)
-    # Correlation of adj close prices
-    closing_df = pdr.get_data_yahoo(tech_list, start=start, end=end)['Adj Close']
-    tech_rets = closing_df.pct_change()
-
-    filename6 = f'comparations_visual_analysis_chart_{date}.png'
-    filepath6 = os.path.join('./static/image/tickers/', filename6)
-    fileurl6 = url_for('static', filename=f'image/tickers/{filename6}')
-    if not os.path.exists(filepath6):
-        sns.pairplot(tech_rets, kind='reg')
-        plt.savefig(filepath6)
-
-    filename7 = f'comparations_daily_return_chart_{date}.png'
-    filepath7 = os.path.join('./static/image/tickers/', filename7)
-    fileurl7 = url_for('static', filename=f'image/tickers/{filename7}')
-    if not os.path.exists(filepath7):
-        return_fig = sns.PairGrid(tech_rets.dropna())
-        return_fig.map_upper(plt.scatter, color='purple')
-        return_fig.map_lower(sns.kdeplot, cmap='cool_d')
-        return_fig.map_diag(plt.hist, bins=30)
-        plt.savefig(filepath7)
-
-    filename8 = f'comparations_close_chart_{date}.png'
-    filepath8 = os.path.join('./static/image/tickers/', filename8)
-    fileurl8 = url_for('static', filename=f'image/tickers/{filename8}')
-    if not os.path.exists(filepath8):
-        returns_fig = sns.PairGrid(closing_df)
-        returns_fig.map_upper(plt.scatter, color='purple')
-        returns_fig.map_lower(sns.kdeplot, cmap='cool_d')
-        returns_fig.map_diag(plt.hist, bins=30)
-        plt.savefig(filepath8)
-
-    filename9 = f'comparations_correlation_chart_{date}.png'
-    filepath9 = os.path.join('./static/image/tickers/', filename9)
-    fileurl9 = url_for('static', filename=f'image/tickers/{filename9}')
-    if not os.path.exists(filepath9):
-        plt.figure(figsize=(12, 10))
-        plt.subplot(2, 2, 1)
-        sns.heatmap(tech_rets.corr(), annot=True, cmap='summer')
-        plt.title('Correlation of stock return')
-        plt.subplot(2, 2, 2)
-        sns.heatmap(closing_df.corr(), annot=True, cmap='summer')
-        plt.title('Correlation of stock closing price')
-        plt.savefig(filepath9)
-    # Risk
-    filename10 = f'risks_chart_{date}.png'
-    filepath10 = os.path.join('./static/image/tickers/', filename10)
-    fileurl10 = url_for('static', filename=f'image/tickers/{filename10}')
-    if not os.path.exists(filepath10):
-        rets = tech_rets.dropna()
-        area = np.pi * 20
-        plt.figure(figsize=(10, 8))
-        plt.scatter(rets.mean(), rets.std(), s=area)
-        plt.xlabel('Expected return')
-        plt.ylabel('Risk')
-        for label, x, y in zip(rets.columns, rets.mean(), rets.std()):
-            plt.annotate(label, xy=(x, y), xytext=(50, 50), textcoords='offset points', ha='right', va='bottom',
-                         arrowprops=dict(arrowstyle='-', color='blue', connectionstyle='arc3,rad=-0.3'))
-        plt.savefig(filepath10)
-
-    return render_template('tickers_analysis.html', tech_list=tech_list, fileurl1=fileurl1, fileurl2=fileurl2,
-                           fileurl3=fileurl3, fileurl4=fileurl4, fileurl5=fileurl5, fileurl6=fileurl6,
-                           fileurl7=fileurl7,
-                           fileurl8=fileurl8, fileurl9=fileurl9, fileurl10=fileurl10)
 
 
 @app.route('/ticker/<ticker>')
@@ -418,9 +238,9 @@ def ticker_detail(ticker):
     count = 1
     modelUse = 0
     numModel = 0
-    with open('saved_weights.pt', 'w') as f:
-        pass
-    while count < 21:
+    resetSavedWeights()
+
+    while count < 16:
         print("Lần lặp", count)
         valid_loss = printTrainVal(train_dataloader, valid_dataloader)
         if best_valid_loss > valid_loss:
@@ -428,8 +248,6 @@ def ticker_detail(ticker):
             modelUse = bestModel()
             numModel = count
         count = count + 1
-        # if best_valid_loss < valid_loss and count > 2:
-        #     break
 
     print("Với", count - 1, "lần chạy cho ", ticker, ", lần chạy thứ", numModel, "cho ra kết quả tối ưu nhất với "
                                                                                  "valid_loss =", best_valid_loss)
@@ -439,6 +257,21 @@ def ticker_detail(ticker):
         y_test_pred = modelUse(x_test)
 
     y_test_pred = y_test_pred.numpy()[0]
+
+    y_test_array = np.ndarray.tolist(y_test[:, 0])
+    y_test_pred_array = np.ndarray.tolist(y_test_pred[:, 0])
+
+    y_test_array = json.loads(json.dumps(y_test_array))
+    y_test_pred_array = json.loads(json.dumps(y_test_pred_array))
+
+    y_test_array = [float(value) for value in y_test_array]
+    y_test_pred_array = [float(value) for value in y_test_pred_array]
+    # print(y_test_array)
+    # print(y_test_pred_array)
+    print("evs = ", explained_variance_score(y_test_array, y_test_pred_array))
+    print("r2score = ", r2_score(y_test_array, y_test_pred_array))
+    print("mse = ", mean_squared_error(y_test_array, y_test_pred_array))
+    print("mae = ", mean_absolute_error(y_test_array, y_test_pred_array))
 
     idx = 0
     filename5 = f'prediction_chart_{date}_{ticker}.png'
@@ -498,91 +331,6 @@ def ticker_detail(ticker):
     col_close = data_pred.pop('Date')
     data_pred.insert(0, 'Date', col_close)
     pred_data_list = data_pred.reset_index().to_dict(orient='records')
-
-    # # LSTM2
-    # # Get the stock quote
-    # df = pdr.get_data_yahoo(ticker, start='2012-01-01', end=datetime.now())
-    # # Create a new dataframe with only the 'Close column
-    # data = df.filter(['Close'])
-    # # Convert the dataframe to a numpy array
-    # dataset = data.values
-    # # Get the number of rows to train the model on
-    # training_data_len = int(np.ceil(len(dataset) * .95))
-    # scaler = MinMaxScaler(feature_range=(0, 1))
-    # scaled_data = scaler.fit_transform(dataset)
-    # # Create the training data set
-    # # Create the scaled training data set
-    # train_data = scaled_data[0:int(training_data_len), :]
-    # # Split the data into x_train and y_train data sets
-    # x_train = []
-    # y_train = []
-    # for i in range(60, len(train_data)):
-    #     x_train.append(train_data[i - 60:i, 0])
-    #     y_train.append(train_data[i, 0])
-    #     # if i <= 61:
-    #     #     print(x_train)
-    #     #     print(y_train)
-    #     #     print()
-    # # Convert the x_train and y_train to numpy arrays
-    # x_train, y_train = np.array(x_train), np.array(y_train)
-    # # Reshape the data
-    # x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
-    #
-    # count = 1
-    # minRmse = 20
-    # predictionsUse = 0
-    # while count < 5:
-    #     # Build the LSTM model
-    #     model = Sequential()
-    #     model.add(LSTM(128, return_sequences=True, input_shape=(x_train.shape[1], 1)))
-    #     model.add(LSTM(64, return_sequences=False))
-    #     model.add(Dense(25))
-    #     model.add(Dense(1))
-    #     # Compile the model
-    #     model.compile(optimizer='adam', loss='mean_squared_error')
-    #     # Train the model
-    #     model.fit(x_train, y_train, batch_size=1, epochs=1)
-    #     # Create the testing data set
-    #     # Create a new array containing scaled values
-    #     test_data = scaled_data[training_data_len - 60:, :]
-    #     # Create the data sets x_test and y_test
-    #     x_test = []
-    #     y_test = dataset[training_data_len:, :]
-    #     for i in range(60, len(test_data)):
-    #         x_test.append(test_data[i - 60:i, 0])
-    #     # Convert the data to a numpy array
-    #     x_test = np.array(x_test)
-    #     # Reshape the data
-    #     x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
-    #     # Get the models predicted price values
-    #     predictions = model.predict(x_test)
-    #     predictions = scaler.inverse_transform(predictions)
-    #     # Get the root mean squared error (RMSE)
-    #     rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
-    #     if rmse < minRmse:
-    #         minRmse = rmse
-    #         predictionsUse = predictions
-    #     print("lần ", count, ": rmse= ", rmse)
-    #     count = count + 1
-    #
-    # # Plot the data
-    # train = data[:training_data_len]
-    # valid = data[training_data_len:]
-    # valid['Predictions'] = predictionsUse
-    # print(valid)
-    # # Visualize the data
-    # filename6 = f'prediction_chart_lstm2_{date}_{ticker}.png'
-    # filepath6 = os.path.join('./static/image/', filename6)
-    # fileurl6 = url_for('static', filename=f'image/{filename6}')
-    # if not os.path.exists(filepath6):
-    #     plt.figure(figsize=(14.5, 6.5))
-    #     plt.title('Model')
-    #     plt.xlabel('Date', fontsize=18)
-    #     plt.ylabel('Close Price USD ($)', fontsize=18)
-    #     plt.plot(train['Close'])
-    #     plt.plot(valid[['Close', 'Predictions']])
-    #     plt.legend(['Train', 'Val', 'Predictions'], loc='lower right')
-    #     plt.savefig(filepath6)
 
     # Truyền dữ liệu cho template
     return render_template('ticker_detail.html', ticker=ticker, current_price=current_price, open_price=open_price,
